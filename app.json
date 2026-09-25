@@ -1,0 +1,73 @@
+{
+  "expo": {
+    "name": "Puantajım",
+    "slug": "puantajim",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "puantajim",
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-status-bar",
+      "expo-sharing",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "PunchWidget",
+              "label": "Puantajım Hızlı Giriş",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 3,
+              "targetCellHeight": 2,
+              "description": "Ana ekrandan hızlıca giriş/çıkış yapın.",
+              "updatePeriodMillis": 1800000
+            }
+          ],
+          "widgetTaskHandler": "./src/widget/widgetTaskHandler.tsx"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "İş yerine varış ve çıkışlarınızı otomatik olarak algılamak ve hatırlatıcı göndermek için arka planda konum izni gereklidir.",
+          "locationAlwaysPermission": "İş yerine varış ve çıkışlarınızı otomatik algılamak için arka planda konum gereklidir.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ]
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.arge16.puantajim"
+    },
+    "android": {
+      "package": "com.arge16.puantajim",
+      "adaptiveIcon": {
+        "backgroundColor": "#0F172A",
+        "foregroundImage": "./assets/adaptive-icon.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBIuB4VKarRd6K6FXjTGxrJO8eKyAdoz24"
+        }
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "00000000-0000-0000-0000-000000000000"
+      }
+    }
+  }
+}
