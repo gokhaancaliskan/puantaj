@@ -5,7 +5,7 @@ import { getDb } from '../../database/db';
 import { WorkRecord } from '../../database/recordPunch';
 import { useFocusEffect } from 'expo-router';
 import * as Sharing from 'expo-sharing';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Print from 'expo-print';
 
 export default function ReportScreen() {
@@ -41,9 +41,14 @@ export default function ReportScreen() {
     const startOfWeekTime = getStartOfWeek(now);
     const startOfMonthTime = getStartOfMonth(now);
     
+    const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+    const storedUserId = await AsyncStorage.getItem('userId');
+    const userId = storedUserId || 'local_user';
+
     // Fetch recent records, e.g. last 30 days
     const allRecords = await db.getAllAsync<WorkRecord>(
-      `SELECT * FROM work_records WHERE user_id = 'local_user' ORDER BY check_in_timestamp DESC LIMIT 100`
+      `SELECT * FROM work_records WHERE user_id = ? ORDER BY check_in_timestamp DESC LIMIT 100`,
+      [userId]
     );
 
     setRecords(allRecords);

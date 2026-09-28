@@ -21,4 +21,11 @@ export const initDb = async () => {
       synced_at INTEGER
     );
   `);
+
+  try {
+    // Add synced_at column for existing installations
+    await db.execAsync(`ALTER TABLE work_records ADD COLUMN synced_at INTEGER;`);
+  } catch (e) {
+    // Column might already exist
+  }
 };

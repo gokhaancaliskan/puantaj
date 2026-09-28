@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import * as Location from 'expo-location';
 import { Feather } from '@expo/vector-icons';
-import { Colors } from '../constants/Colors';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width, height } = Dimensions.get('window');
 
 export default function WeatherTimeEffect() {
-  const [weatherData, setWeatherData] = useState<{ isDay: number; weatherCode: number } | null>(null);
+  const [weatherData, setWeatherData] = useState<{ isDay: number; weatherCode: number; timeHour: number } | null>(null);
 
   useEffect(() => {
     fetchWeather();
@@ -35,6 +35,7 @@ export default function WeatherTimeEffect() {
         setWeatherData({
           isDay: data.current.is_day,
           weatherCode: data.current.weather_code,
+          timeHour: new Date().getHours()
         });
       }
     } catch (error) {
@@ -45,31 +46,55 @@ export default function WeatherTimeEffect() {
   if (!weatherData) return null;
 
   const isDay = weatherData.isDay === 1;
+  const hour = weatherData.timeHour;
+  const isSunset = hour >= 17 && hour <= 19;
+  const isSunrise = hour >= 5 && hour <= 7;
+  
   const isRaining = [51, 53, 55, 61, 63, 65, 80, 81, 82].includes(weatherData.weatherCode);
   const isSnowing = [71, 73, 75, 77, 85, 86].includes(weatherData.weatherCode);
 
+  let colors = ['#0B0F19', '#161E2E']; // Default Night
+  if (isSunset) {
+    colors = ['#4338CA', '#DB2777', '#F59E0B'];
+  } else if (isSunrise) {
+    colors = ['#1E3A8A', '#F472B6', '#FDE047'];
+  } else if (isDay) {
+    colors = ['#38BDF8', '#0EA5E9', '#2563EB'];
+  }
+
+  if (isRaining) {
+    colors = isDay ? ['#475569', '#334155', '#1E293B'] : ['#0F172A', '#020617'];
+  } else if (isSnowing) {
+    colors = isDay ? ['#94A3B8', '#CBD5E1', '#F1F5F9'] : ['#1E293B', '#334155'];
+  }
+
   return (
     <View style={styles.container} pointerEvents="none">
-      {/* Sun or Moon icon */}
+      <LinearGradient
+        colors={colors}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+      />
+      
       <View style={[styles.celestialBody, isDay ? styles.sunPos : styles.moonPos]}>
         <Feather
-          name={isDay ? 'sun' : 'moon'}
-          size={120}
-          color={isDay ? Colors.primary : Colors.lightText}
+          name={isSunset ? 'sunset' : isSunrise ? 'sunrise' : isDay ? 'sun' : 'moon'}
+          size={180}
+          color="#FFF"
           style={{ opacity: 0.15 }}
         />
       </View>
 
-      {/* Rain or Snow overlay */}
       {isRaining && (
         <View style={styles.weatherOverlay}>
-          <Feather name="cloud-drizzle" size={200} color={Colors.primary} style={{ opacity: 0.05 }} />
+          <Feather name="cloud-rain" size={240} color="#FFF" style={{ opacity: 0.1 }} />
         </View>
       )}
       
       {isSnowing && (
         <View style={styles.weatherOverlay}>
-          <Feather name="cloud-snow" size={200} color={Colors.primary} style={{ opacity: 0.05 }} />
+          <Feather name="cloud-snow" size={240} color="#FFF" style={{ opacity: 0.1 }} />
         </View>
       )}
     </View>
@@ -78,23 +103,23 @@ export default function WeatherTimeEffect() {
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFill,
-    zIndex: 1, // Will be placed behind main content which has zIndex: 10
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0, 
     overflow: 'hidden',
   },
   celestialBody: {
     position: 'absolute',
   },
   sunPos: {
-    top: -20,
-    right: -20,
+    top: 40,
+    right: -40,
   },
   moonPos: {
-    top: 40,
-    left: -20,
+    top: 60,
+    left: -40,
   },
   weatherOverlay: {
-    ...StyleSheet.absoluteFill,
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
   },

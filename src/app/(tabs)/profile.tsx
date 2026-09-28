@@ -8,6 +8,7 @@ import { router } from 'expo-router';
 
 export default function ProfileScreen() {
   const [session, setSession] = useState<any>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [language, setLanguage] = useState<'tr' | 'en'>('tr');
 
   useEffect(() => {
@@ -21,6 +22,10 @@ export default function ProfileScreen() {
     
     AsyncStorage.getItem('appLanguage').then(res => {
       if (res === 'en' || res === 'tr') setLanguage(res);
+    });
+    
+    AsyncStorage.getItem('userEmail').then(email => {
+      if (email) setUserEmail(email);
     });
   }, []);
 
@@ -44,20 +49,12 @@ export default function ProfileScreen() {
           text: 'Çıkış Yap',
           style: 'destructive',
           onPress: async () => {
-            const { error } = await supabase.auth.signOut();
-            if (error) {
-              Alert.alert('Hata', error.message);
-            } else {
-              await AsyncStorage.multiRemove(['workLat', 'workLng', 'workAddress']);
-              try {
-                const { getDb } = require('../../database/db');
-                const db = getDb();
-                await db.runAsync('DELETE FROM work_records');
-              } catch(e) {
-                console.error('Failed to clear local db on logout', e);
-              }
-              router.replace('/auth');
-            }
+            // Do not await supabase signout to prevent hanging on network issues
+            supabase.auth.signOut().catch(e => console.log('Supabase signout error:', e));
+            
+            // Immediately clear storage and redirect
+            await AsyncStorage.multiRemove(['workLat', 'workLng', 'workAddress', 'userId', 'userEmail', 'supabase.auth.token']);
+            router.replace('/auth');
           }
         }
       ]
@@ -87,7 +84,7 @@ export default function ProfileScreen() {
             <Feather name="user" size={32} color="#fff" />
           </View>
           <Text style={styles.cardText}>
-            {session?.user?.email || t('noUser')}
+            {session?.user?.email || userEmail || t('noUser')}
           </Text>
         </View>
         <Pressable style={styles.logoutButton} onPress={handleLogout}>

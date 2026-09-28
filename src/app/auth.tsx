@@ -5,6 +5,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '../constants/Colors';
 import { supabase } from '../database/supabase';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { runFullSync } from '../database/sync';
 
 export default function AuthScreen() {
   const [email, setEmail] = useState('');
@@ -30,7 +32,8 @@ export default function AuthScreen() {
         } else if (!data.session) {
           Alert.alert('Başarılı', 'Lütfen e-posta adresinize gelen doğrulama bağlantısına tıklayın!');
         } else {
-          await saveRememberMe();
+          await saveRememberMe(data.session.user.id, data.session.user.email);
+          await runFullSync().catch(console.log);
           await checkLocationAndRedirect();
         }
       } else {
@@ -38,7 +41,8 @@ export default function AuthScreen() {
         if (error) {
           Alert.alert('Giriş Hatası', error.message);
         } else {
-          await saveRememberMe();
+          await saveRememberMe(data.session.user.id, data.session.user.email);
+          await runFullSync().catch(console.log);
           await checkLocationAndRedirect();
         }
       }
@@ -49,7 +53,13 @@ export default function AuthScreen() {
     }
   };
 
-  const saveRememberMe = async () => {
+  const saveRememberMe = async (userId?: string, userEmail?: string) => {
+    if (userId) {
+      await AsyncStorage.setItem('userId', userId);
+    }
+    if (userEmail) {
+      await AsyncStorage.setItem('userEmail', userEmail);
+    }
     if (rememberMe) {
       // Set session expiry to 7 days from now
       const expiryDate = new Date();
@@ -78,9 +88,14 @@ export default function AuthScreen() {
     >
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.logoContainer}>
+        <LinearGradient
+          colors={['#4F46E5', '#3B82F6']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.logoContainer}
+        >
           <Feather name="clock" size={40} color="#fff" />
-        </View>
+        </LinearGradient>
         <Text style={styles.title}>Puantajım</Text>
         <Text style={styles.subtitle}>
           {isSignUp ? 'Yeni bir hesap oluşturun' : 'Hesabınıza giriş yapın'}
@@ -133,15 +148,22 @@ export default function AuthScreen() {
         )}
 
         <Pressable
-          style={({ pressed }) => [styles.button, pressed && styles.buttonPressed, loading && styles.buttonDisabled]}
+          style={({ pressed }) => [styles.buttonContainer, pressed && styles.buttonPressed, loading && styles.buttonDisabled]}
           onPress={handleAuth}
           disabled={loading}
         >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>{isSignUp ? 'Kayıt Ol' : 'Giriş Yap'}</Text>
-          )}
+          <LinearGradient
+            colors={['#4F46E5', '#3B82F6']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.buttonGradient}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>{isSignUp ? 'Kayıt Ol' : 'Giriş Yap'}</Text>
+            )}
+          </LinearGradient>
         </Pressable>
 
         <Pressable style={styles.switchModeButton} onPress={() => setIsSignUp(!isSignUp)}>
@@ -167,18 +189,18 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   logoContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
+    width: 88,
+    height: 88,
+    borderRadius: 28,
     backgroundColor: Colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
     shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 12,
   },
   title: {
     fontSize: 32,
@@ -242,16 +264,19 @@ const styles = StyleSheet.create({
     color: Colors.lightText,
     fontWeight: '500',
   },
-  button: {
-    backgroundColor: Colors.primary,
-    padding: 18,
+  buttonContainer: {
     borderRadius: 16,
-    alignItems: 'center',
     shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  buttonGradient: {
+    padding: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   buttonPressed: {
     opacity: 0.85,

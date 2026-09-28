@@ -56,6 +56,7 @@
     },
     "android": {
       "package": "com.arge16.puantajim",
+      "allowBackup": false,
       "adaptiveIcon": {
         "backgroundColor": "#0F172A",
         "foregroundImage": "./assets/adaptive-icon.png"

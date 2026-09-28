@@ -35,12 +35,17 @@ const formatDate = (date: Date): string => {
 export const recordPunch = async (
   type: PunchType,
   source: PunchSource,
-  userId: string = 'local_user'
+  fallbackUserId: string = 'local_user'
 ): Promise<{ success: boolean; message?: string }> => {
   const db = getDb();
   const now = new Date();
   const todayStr = formatDate(now);
   const timestamp = now.getTime();
+
+  // Try to get real user id from AsyncStorage
+  const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+  const storedUserId = await AsyncStorage.getItem('userId');
+  const userId = storedUserId || fallbackUserId;
 
   // 1. Önceki günden çıkışsız kayıt var mı kontrolü
   const previousUnclosedRecords = await db.getAllAsync<WorkRecord>(

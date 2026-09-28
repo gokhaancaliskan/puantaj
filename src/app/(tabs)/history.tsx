@@ -15,8 +15,12 @@ export default function HistoryScreen() {
 
   const loadRecords = async () => {
     const db = getDb();
+    const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+    const storedUserId = await AsyncStorage.getItem('userId');
+    const userId = storedUserId || 'local_user';
     const result = await db.getAllAsync<WorkRecord>(
-      `SELECT * FROM work_records WHERE user_id = 'local_user' ORDER BY date DESC`
+      `SELECT * FROM work_records WHERE user_id = ? ORDER BY date DESC`,
+      [userId]
     );
     setRecords(result);
   };

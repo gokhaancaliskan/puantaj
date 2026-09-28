@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '../../constants/Colors';
 import { recordPunch, PunchType, WorkRecord } from '../../database/recordPunch';
 import { getDb } from '../../database/db';
+import { runFullSync, syncToCloud } from '../../database/sync';
 import WeatherTimeEffect from '../../components/WeatherTimeEffect';
 import { useFocusEffect, router } from 'expo-router';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
@@ -11,6 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { GEOFENCE_TASK_NAME } from '../../tasks/geofenceTask';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function HomeScreen() {
   const [currentPunchType, setCurrentPunchType] = useState<PunchType>('in');
@@ -39,6 +41,12 @@ export default function HomeScreen() {
             if (lastLoc) setUserLocation({ lat: lastLoc.coords.latitude, lng: lastLoc.coords.longitude });
           }
         }
+        
+        // Run cloud sync in background
+        runFullSync().then(() => {
+          loadWeeklyRecords();
+        }).catch(e => console.log('Sync err:', e));
+        
       })();
     }, [])
   );
@@ -80,9 +88,13 @@ export default function HomeScreen() {
       const now = new Date();
       const todayStr = `${now.getDate().toString().padStart(2, '0')}.${(now.getMonth() + 1).toString().padStart(2, '0')}.${now.getFullYear()}`;
       
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const storedUserId = await AsyncStorage.getItem('userId');
+      const userId = storedUserId || 'local_user';
+
       const record = await db.getFirstAsync<any>(
-        `SELECT * FROM work_records WHERE user_id = 'local_user' AND date = ?`,
-        [todayStr]
+        `SELECT * FROM work_records WHERE user_id = ? AND date = ?`,
+        [userId, todayStr]
       );
 
       if (record && record.check_in_timestamp && !record.check_out_timestamp) {
@@ -130,8 +142,13 @@ export default function HomeScreen() {
   const loadWeeklyRecords = async () => {
     try {
       const db = getDb();
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const storedUserId = await AsyncStorage.getItem('userId');
+      const userId = storedUserId || 'local_user';
+
       const result = await db.getAllAsync<WorkRecord>(
-        `SELECT * FROM work_records WHERE user_id = 'local_user' ORDER BY date DESC LIMIT 7`
+        `SELECT * FROM work_records WHERE user_id = ? ORDER BY date DESC LIMIT 7`,
+        [userId]
       );
       setWeeklyRecords(result);
     } catch (e) {
@@ -222,6 +239,9 @@ export default function HomeScreen() {
                   }
                   checkCurrentState();
                   loadWeeklyRecords();
+                  
+                  // Trigger sync in background
+                  syncToCloud().catch(e => console.log(e));
                 }
               }
             } catch (e: any) {
@@ -277,20 +297,35 @@ export default function HomeScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+    <View style={{ flex: 1, backgroundColor: Colors.background }}>
       <WeatherTimeEffect />
+      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
       
+
       <View style={styles.headerArea}>
         <Pressable
           style={({ pressed }) => [
-            styles.button,
+            styles.buttonContainer,
             pressed && styles.buttonPressed,
           ]}
           onPress={handlePunch}
         >
-          <Text style={styles.buttonText}>
-            {currentPunchType === 'in' ? 'Giriş Yap' : 'Çıkış Yap'}
-          </Text>
+          <LinearGradient
+            colors={currentPunchType === 'in' ? ['#4F46E5', '#3B82F6'] : ['#EF4444', '#F59E0B']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.buttonGradient}
+          >
+            <Feather 
+              name={currentPunchType === 'in' ? 'log-in' : 'log-out'} 
+              size={28} 
+              color="#FFF" 
+              style={{ marginRight: 12 }} 
+            />
+            <Text style={styles.buttonText}>
+              {currentPunchType === 'in' ? 'Giriş Yap' : 'Çıkış Yap'}
+            </Text>
+          </LinearGradient>
         </Pressable>
         {lastPunchTime && (
           <Text style={styles.lastPunchText}>{lastPunchTime}</Text>
@@ -332,7 +367,6 @@ export default function HomeScreen() {
               )}
             </MapView>
             <Pressable style={styles.mapOverlay} onPress={() => setIsMapModalVisible(true)} />
-          </View>
           {workAddress && (
             <View style={styles.addressBox}>
               <Feather name="map-pin" size={14} color={Colors.primary} style={{ marginRight: 6 }} />
@@ -396,13 +430,14 @@ export default function HomeScreen() {
         </Modal>
       )}
     </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: 'transparent',
   },
   contentContainer: {
     flexGrow: 1,
@@ -416,17 +451,19 @@ const styles = StyleSheet.create({
     paddingTop: 60, 
     paddingBottom: 24,
   },
-  button: {
-    backgroundColor: Colors.primary,
-    paddingVertical: 24,
-    paddingHorizontal: 40,
-    borderRadius: 20,
+  buttonContainer: {
+    width: '85%',
+    borderRadius: 24,
     elevation: 8,
     shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    width: '80%',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    overflow: 'hidden',
+  },
+  buttonGradient: {
+    paddingVertical: 20,
+    paddingHorizontal: 32,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',

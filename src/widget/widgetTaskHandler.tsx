@@ -23,9 +23,13 @@ const getCurrentWidgetState = async (): Promise<{ punchType: 'in' | 'out'; lastP
     const now = new Date();
     const todayStr = formatDate(now);
 
+    const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+    const storedUserId = await AsyncStorage.getItem('userId');
+    const userId = storedUserId || 'local_user';
+
     const record = await db.getFirstAsync<WorkRecord>(
-      `SELECT * FROM work_records WHERE user_id = 'local_user' AND date = ?`,
-      [todayStr]
+      `SELECT * FROM work_records WHERE user_id = ? AND date = ?`,
+      [userId, todayStr]
     );
 
     if (record && record.check_in_timestamp && !record.check_out_timestamp) {

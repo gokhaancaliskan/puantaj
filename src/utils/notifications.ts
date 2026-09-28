@@ -32,10 +32,14 @@ export const scheduleNotificationsForWeek = async () => {
 
     if (day === 0) continue; // Pazar
 
+    const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+    const storedUserId = await AsyncStorage.getItem('userId');
+    const userId = storedUserId || 'local_user';
+
     const dateStr = formatDate(targetDate);
     const record = await db.getFirstAsync<WorkRecord>(
-      `SELECT * FROM work_records WHERE user_id = 'local_user' AND date = ?`,
-      [dateStr]
+      `SELECT * FROM work_records WHERE user_id = ? AND date = ?`,
+      [userId, dateStr]
     );
 
     // İzinli gün ise bildirim planlama
