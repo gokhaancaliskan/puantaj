@@ -6,6 +6,7 @@ import { WorkRecord } from '../../database/recordPunch';
 import { useFocusEffect } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
+import * as Print from 'expo-print';
 
 export default function ReportScreen() {
   const [dailyStats, setDailyStats] = useState({ expected: 0, worked: 0, diff: 0 });
@@ -135,8 +136,7 @@ export default function ReportScreen() {
   const exportData = async () => {
     try {
       const csvHeader = "ID,Tarih,Giris,Cikis,GunTipi,IzinliMi\n";
-      
-      let csvContent = csvHeader;
+      let csvContent = "\uFEFF" + csvHeader;
       if (records && records.length > 0) {
         const csvRows = records.map(r => {
           const inTime = r.check_in_timestamp ? new Date(r.check_in_timestamp).toLocaleString('tr-TR') : 'Bilinmiyor';
@@ -161,7 +161,7 @@ export default function ReportScreen() {
         csvContent += "Kayit,Yok,-,-,-,-\n";
       }
 
-      const filename = FileSystem.documentDirectory + 'puantaj_raporu.csv';
+      const filename = (FileSystem as any).documentDirectory + 'puantaj_raporu.csv';
       await FileSystem.writeAsStringAsync(filename, csvContent, { encoding: FileSystem.EncodingType.UTF8 });
       
       if (await Sharing.isAvailableAsync()) {
@@ -176,6 +176,48 @@ export default function ReportScreen() {
     } catch (e: any) {
       console.error('Export failed:', e);
       Alert.alert('Hata', 'Dışa aktarma başarısız oldu: ' + (e.message || 'Bilinmeyen hata'));
+    }
+  };
+
+  const exportPdf = async () => {
+    try {
+      const htmlContent = `
+        <html>
+          <head>
+            <style>
+              body { font-family: 'Helvetica'; padding: 20px; }
+              h1 { text-align: center; color: #333; }
+              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              th { background-color: #f2f2f2; }
+            </style>
+          </head>
+          <body>
+            <h1>Puantaj Raporu</h1>
+            <table>
+              <tr><th>Tarih</th><th>Giriş</th><th>Çıkış</th><th>Gün Tipi</th><th>İzinli mi?</th></tr>
+              ${records.map(r => `
+                <tr>
+                  <td>${r.date}</td>
+                  <td>${r.check_in_timestamp ? new Date(r.check_in_timestamp).toLocaleTimeString() : ''}</td>
+                  <td>${r.check_out_timestamp ? new Date(r.check_out_timestamp).toLocaleTimeString() : ''}</td>
+                  <td>${r.day_type === 'weekday' ? 'Hafta İçi' : r.day_type === 'saturday' ? 'Cumartesi' : 'Pazar'}</td>
+                  <td>${r.is_leave_day ? 'Evet' : 'Hayır'}</td>
+                </tr>
+              `).join('')}
+            </table>
+          </body>
+        </html>
+      `;
+      const { uri } = await Print.printToFileAsync({ html: htmlContent });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Raporu Paylaş' });
+      } else {
+        Alert.alert('Hata', 'Paylaşım özelliği bu cihazda desteklenmiyor.');
+      }
+    } catch (e: any) {
+      console.error('PDF Export failed:', e);
+      Alert.alert('Hata', 'PDF dışa aktarma başarısız oldu: ' + e.message);
     }
   };
 
@@ -228,6 +270,9 @@ export default function ReportScreen() {
 
       <Pressable style={styles.button} onPress={exportData}>
         <Text style={styles.buttonText}>CSV Olarak Dışa Aktar</Text>
+      </Pressable>
+      <Pressable style={[styles.button, { marginTop: 0, backgroundColor: (Colors as any).secondary || '#5e5ce6' }]} onPress={exportPdf}>
+        <Text style={styles.buttonText}>PDF Olarak Dışa Aktar</Text>
       </Pressable>
     </ScrollView>
   );

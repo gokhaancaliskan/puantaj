@@ -49,6 +49,13 @@ export default function ProfileScreen() {
               Alert.alert('Hata', error.message);
             } else {
               await AsyncStorage.multiRemove(['workLat', 'workLng', 'workAddress']);
+              try {
+                const { getDb } = require('../../database/db');
+                const db = getDb();
+                await db.runAsync('DELETE FROM work_records');
+              } catch(e) {
+                console.error('Failed to clear local db on logout', e);
+              }
               router.replace('/auth');
             }
           }
@@ -106,7 +113,7 @@ export default function ProfileScreen() {
         
         <View style={styles.divider} />
         
-        <Pressable style={styles.menuItem} onPress={() => Alert.alert(t('support'), 'destek@puantajim.com')}>
+        <Pressable style={styles.menuItem} onPress={() => Alert.alert(t('support'), 'gokhaancaliskan@gmail.com')}>
           <View style={styles.menuRow}>
             <View style={[styles.iconBox, { backgroundColor: '#FF9500' }]}>
               <Feather name="mail" size={20} color="#fff" />

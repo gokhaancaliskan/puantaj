@@ -78,7 +78,7 @@ export default function WeatherTimeEffect() {
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 1, // Will be placed behind main content which has zIndex: 10
     overflow: 'hidden',
   },
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     left: -20,
   },
   weatherOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     alignItems: 'center',
   },

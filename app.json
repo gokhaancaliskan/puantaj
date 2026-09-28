@@ -25,6 +25,16 @@
               "targetCellHeight": 2,
               "description": "Ana ekrandan hızlıca giriş/çıkış yapın.",
               "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "DetailWidget",
+              "label": "Puantajım Detaylı İşlem",
+              "minWidth": "300dp",
+              "minHeight": "150dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "description": "Detaylı puantaj işlemleri yapın.",
+              "updatePeriodMillis": 1800000
             }
           ],
           "widgetTaskHandler": "./src/widget/widgetTaskHandler.tsx"

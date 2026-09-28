@@ -15,6 +15,7 @@ export function PunchWidget({ punchType = 'in', lastPunchTime = null }: PunchWid
 
   return (
     <FlexWidget
+      clickAction="PUNCH_ACTION"
       style={{
         height: 'match_parent',
         width: 'match_parent',
@@ -85,6 +86,50 @@ export function PunchWidget({ punchType = 'in', lastPunchTime = null }: PunchWid
             fontWeight: 'bold',
             fontFamily: 'System',
           }}
+        />
+      </FlexWidget>
+    </FlexWidget>
+  );
+}
+
+export function DetailWidget() {
+  return (
+    <FlexWidget
+      clickAction="OPEN_APP"
+      style={{
+        height: 'match_parent',
+        width: 'match_parent',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexDirection: 'row',
+        backgroundColor: '#1E293B',
+        borderRadius: 24,
+        paddingHorizontal: 20,
+      }}
+    >
+      <FlexWidget style={{ flexDirection: 'column', justifyContent: 'center' }}>
+        <TextWidget
+          text="Puantajım"
+          style={{ fontSize: 20, color: '#FFFFFF', fontWeight: 'bold' }}
+        />
+        <TextWidget
+          text="Hızlı işlem yapın"
+          style={{ fontSize: 14, color: '#94A3B8', marginTop: 4 }}
+        />
+      </FlexWidget>
+
+      <FlexWidget
+        clickAction="PUNCH_ACTION"
+        style={{
+          backgroundColor: '#3B82F6',
+          borderRadius: 16,
+          paddingHorizontal: 20,
+          paddingVertical: 14,
+        }}
+      >
+        <TextWidget
+          text="Giriş/Çıkış"
+          style={{ color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' }}
         />
       </FlexWidget>
     </FlexWidget>

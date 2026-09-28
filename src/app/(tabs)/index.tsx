@@ -299,8 +299,7 @@ export default function HomeScreen() {
 
       {workLocation && (
         <View style={styles.mapSection}>
-          <View style={styles.mapContainer}>
-            <MapView
+          <MapView
               provider={PROVIDER_GOOGLE}
               style={styles.map}
               initialRegion={{
@@ -414,41 +413,44 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
     paddingHorizontal: 24,
-    paddingTop: 80, 
-    paddingBottom: 16,
+    paddingTop: 60, 
+    paddingBottom: 24,
   },
   button: {
     backgroundColor: Colors.primary,
-    paddingVertical: 32,
-    paddingHorizontal: 64,
-    borderRadius: 32,
-    elevation: 10,
+    paddingVertical: 24,
+    paddingHorizontal: 40,
+    borderRadius: 20,
+    elevation: 8,
     shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    width: '100%',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    width: '80%',
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   buttonPressed: {
     opacity: 0.8,
-    transform: [{ scale: 0.96 }],
+    transform: [{ scale: 0.98 }],
   },
   buttonText: {
     color: '#FFF',
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: 'bold',
     fontFamily: 'System', 
   },
   lastPunchText: {
     marginTop: 16,
-    fontSize: 16,
+    fontSize: 14,
     color: Colors.lightText,
     fontFamily: 'System',
-    fontWeight: '600'
+    fontWeight: '500'
   },
   mapSection: {
-    paddingHorizontal: 24,
+    width: '100%',
+    height: 200,
     marginBottom: 16,
     width: '100%',
     alignItems: 'center',
@@ -477,7 +479,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.card,
     padding: 12,
+    marginHorizontal: 24,
+    marginTop: -20,
     borderRadius: 12,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   addressText: {
     color: Colors.text,

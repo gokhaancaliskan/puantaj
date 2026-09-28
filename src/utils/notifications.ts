@@ -74,7 +74,7 @@ const scheduleForDate = async (date: Date, hour: number, minute: number, title: 
 
   await Notifications.scheduleNotificationAsync({
     content: { title, body },
-    trigger: triggerDate,
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: triggerDate },
   });
 };
 

@@ -1,6 +1,6 @@
 import React from 'react';
-import { WidgetTaskHandlerProps } from 'react-native-android-widget';
-import { PunchWidget } from './Widget';
+import { WidgetTaskHandlerProps, requestWidgetUpdate } from 'react-native-android-widget';
+import { PunchWidget, DetailWidget } from './Widget';
 import { recordPunch, PunchType, WorkRecord } from '../database/recordPunch';
 import { getDb, initDb } from '../database/db';
 
@@ -46,11 +46,16 @@ const getCurrentWidgetState = async (): Promise<{ punchType: 'in' | 'out'; lastP
 };
 
 export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
+  const widgetInfo = props.widgetInfo;
+  
   if (props.widgetAction === 'WIDGET_ADDED' || props.widgetAction === 'WIDGET_UPDATE') {
     const state = await getCurrentWidgetState();
-    props.renderWidget(
-      <PunchWidget punchType={state.punchType} lastPunchTime={state.lastPunchTime} />
-    );
+    
+    if (widgetInfo.widgetName === 'DetailWidget') {
+      props.renderWidget(<DetailWidget />);
+    } else {
+      props.renderWidget(<PunchWidget punchType={state.punchType} lastPunchTime={state.lastPunchTime} />);
+    }
   } else if (props.widgetAction === 'WIDGET_CLICK') {
     if (props.clickAction === 'PUNCH_ACTION') {
       try {
@@ -59,9 +64,13 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
 
         // Re-fetch updated state and re-render
         const newState = await getCurrentWidgetState();
-        props.renderWidget(
-          <PunchWidget punchType={newState.punchType} lastPunchTime={newState.lastPunchTime} />
-        );
+        if (widgetInfo.widgetName === 'DetailWidget') {
+          props.renderWidget(<DetailWidget />);
+        } else {
+          props.renderWidget(
+            <PunchWidget punchType={newState.punchType} lastPunchTime={newState.lastPunchTime} />
+          );
+        }
       } catch (e) {
         console.error('Widget punch error:', e);
       }

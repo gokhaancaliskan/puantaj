@@ -2,8 +2,10 @@ import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { scheduleLocalNotification } from './notifications';
 import { getDb, initDb } from '../database/db';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const GEOFENCE_TASK_NAME = 'WORK_GEOFENCE_TASK';
+const COOLDOWN_MS = 4 * 60 * 60 * 1000; // 4 hours
 
 // Define the background task for geofencing
 TaskManager.defineTask(GEOFENCE_TASK_NAME, async ({ data, error }) => {
@@ -17,16 +19,22 @@ TaskManager.defineTask(GEOFENCE_TASK_NAME, async ({ data, error }) => {
 
     if (eventType === Location.GeofencingEventType.Enter) {
       console.log('Entered geofence:', region);
-      await scheduleLocalNotification(
-        'İş Yerine Hoş Geldiniz!',
-        'Giriş yapmayı unutmayın.'
-      );
+      const lastStr = await AsyncStorage.getItem('last_enter_notif');
+      const lastTime = lastStr ? parseInt(lastStr, 10) : 0;
+      
+      if (Date.now() - lastTime > COOLDOWN_MS) {
+        await scheduleLocalNotification('İş Yerine Hoş Geldiniz!', 'Giriş yapmayı unutmayın.');
+        await AsyncStorage.setItem('last_enter_notif', Date.now().toString());
+      }
     } else if (eventType === Location.GeofencingEventType.Exit) {
       console.log('Exited geofence:', region);
-      await scheduleLocalNotification(
-        'İyi Akşamlar!',
-        'Çıkış yapmayı unutmayın.'
-      );
+      const lastStr = await AsyncStorage.getItem('last_exit_notif');
+      const lastTime = lastStr ? parseInt(lastStr, 10) : 0;
+      
+      if (Date.now() - lastTime > COOLDOWN_MS) {
+        await scheduleLocalNotification('İyi Akşamlar!', 'Çıkış yapmayı unutmayın.');
+        await AsyncStorage.setItem('last_exit_notif', Date.now().toString());
+      }
     }
   }
 });

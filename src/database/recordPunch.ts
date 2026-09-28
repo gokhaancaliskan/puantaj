@@ -69,9 +69,9 @@ export const recordPunch = async (
       // Güncelle
       await db.runAsync(
         `UPDATE work_records 
-         SET check_in_timestamp = ?, source = ?, last_edited_at = ?, synced_at = NULL 
+         SET check_in_timestamp = ?, source = ?, last_edited_at = ?, synced_at = ? 
          WHERE id = ?`,
-        [timestamp, source, timestamp, todayRecord.id]
+        [timestamp, source || 'manual', timestamp, null, todayRecord.id]
       );
     } else {
       // Yeni kayıt
@@ -79,7 +79,7 @@ export const recordPunch = async (
       await db.runAsync(
         `INSERT INTO work_records (id, user_id, date, check_in_timestamp, check_out_timestamp, day_type, is_leave_day, source, last_edited_at, synced_at)
          VALUES (?, ?, ?, ?, NULL, ?, 0, ?, ?, NULL)`,
-        [id, userId, todayStr, timestamp, getDayType(now), source, timestamp]
+        [id, userId, todayStr, timestamp, getDayType(now), source || 'manual', timestamp]
       );
     }
   } else if (type === 'out') {
@@ -93,9 +93,9 @@ export const recordPunch = async (
 
     await db.runAsync(
       `UPDATE work_records 
-       SET check_out_timestamp = ?, source = ?, last_edited_at = ?, synced_at = NULL 
+       SET check_out_timestamp = ?, source = ?, last_edited_at = ?, synced_at = ? 
        WHERE id = ?`,
-      [timestamp, source, timestamp, todayRecord.id]
+      [timestamp, source || 'manual', timestamp, null, todayRecord.id]
     );
   }
 
