@@ -34,7 +34,7 @@ export default function ReportScreen() {
     return new Date(date.getFullYear(), date.getMonth(), 1).setHours(0,0,0,0);
   };
 
-  const calculateReport = async () => {
+  async function calculateReport() {
     const db = getDb();
     const now = new Date();
     const todayStr = `${now.getDate().toString().padStart(2, '0')}.${(now.getMonth() + 1).toString().padStart(2, '0')}.${now.getFullYear()}`;

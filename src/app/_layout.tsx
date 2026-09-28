@@ -43,7 +43,8 @@ export default function RootLayout() {
             sessionValid = true;
           } else {
             // Session expired, clear everything and send to auth
-            await AsyncStorage.multiRemove(['rememberMe', 'sessionExpiry']);
+            await AsyncStorage.removeItem('rememberMe');
+            await AsyncStorage.removeItem('sessionExpiry');
             await supabase.auth.signOut();
           }
         }
@@ -61,7 +62,8 @@ export default function RootLayout() {
               const workLat = await AsyncStorage.getItem('workLat');
               setInitialRoute(workLat ? '(tabs)' : 'setup-location');
             } else {
-              await AsyncStorage.multiRemove(['rememberMe', 'sessionExpiry']);
+              await AsyncStorage.removeItem('rememberMe');
+              await AsyncStorage.removeItem('sessionExpiry');
               setInitialRoute('auth');
             }
           }
@@ -88,7 +90,8 @@ export default function RootLayout() {
     // Listen for auth state changes in real-time
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT') {
-        await AsyncStorage.multiRemove(['rememberMe', 'sessionExpiry']);
+        await AsyncStorage.removeItem('rememberMe');
+        await AsyncStorage.removeItem('sessionExpiry');
         router.replace('/auth');
       }
     });

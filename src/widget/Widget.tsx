@@ -21,7 +21,6 @@ export function PunchWidget({ punchType = 'in', lastPunchTime = null }: PunchWid
         width: 'match_parent',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        alignItems: 'stretch',
         backgroundColor: '#0F172A',
         borderRadius: 20,
         padding: 16,

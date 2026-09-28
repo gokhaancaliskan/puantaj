@@ -13,7 +13,7 @@ export default function WeatherTimeEffect() {
     fetchWeather();
   }, []);
 
-  const fetchWeather = async () => {
+  async function fetchWeather() {
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
       
@@ -71,10 +71,10 @@ export default function WeatherTimeEffect() {
   return (
     <View style={styles.container} pointerEvents="none">
       <LinearGradient
-        colors={colors}
+        colors={colors as [string, string, ...string[]]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
       />
       
       <View style={[styles.celestialBody, isDay ? styles.sunPos : styles.moonPos]}>
@@ -103,7 +103,11 @@ export default function WeatherTimeEffect() {
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     zIndex: 0, 
     overflow: 'hidden',
   },
@@ -119,7 +123,11 @@ const styles = StyleSheet.create({
     left: -40,
   },
   weatherOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
   },

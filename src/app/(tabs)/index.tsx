@@ -489,7 +489,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 200,
     marginBottom: 16,
-    width: '100%',
     alignItems: 'center',
   },
   mapContainer: {
@@ -508,7 +507,11 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   mapOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'transparent',
   },
   addressBox: {
