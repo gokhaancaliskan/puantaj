@@ -118,7 +118,7 @@ export default function HistoryScreen() {
     <View style={styles.container}>
       <FlatList
         data={records}
-        keyExtractor={item => item.id}
+        keyExtractor={item => String(item.id)}
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={<Text style={styles.emptyText}>Henüz kayıt yok.</Text>}

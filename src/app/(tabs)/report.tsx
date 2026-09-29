@@ -546,9 +546,9 @@ export default function ReportScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { padding: 20, paddingTop: 60 },
-  tabContainer: { flexDirection: 'row', backgroundColor: '#E5E5EA', borderRadius: 10, padding: 4, marginBottom: 20 },
+  tabContainer: { flexDirection: 'row', backgroundColor: Colors.border, borderRadius: 10, padding: 4, marginBottom: 20 },
   tabButton: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 8 },
-  tabButtonActive: { backgroundColor: '#FFF', shadowColor: '#000', shadowOffset: {width:0, height:1}, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 },
+  tabButtonActive: { backgroundColor: Colors.card, shadowColor: '#000', shadowOffset: {width:0, height:1}, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 },
   tabText: { fontSize: 14, fontWeight: '600', color: Colors.lightText },
   tabTextActive: { color: Colors.text },
   card: {

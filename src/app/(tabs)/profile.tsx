@@ -108,7 +108,7 @@ export default function ProfileScreen() {
 
     setThemeMode(next);
     await AsyncStorage.setItem('appTheme', next);
-    Appearance.setColorScheme(next === 'system' ? null : next);
+    Appearance.setColorScheme(next === 'system' ? 'system' as any : next);
   };
 
   const saveWorkingHours = async () => {
@@ -170,24 +170,30 @@ export default function ProfileScreen() {
       Alert.alert('Hata', 'Lütfen mesajınızı yazın.');
       return;
     }
+    setIsSendingFeedback(true);
     try {
-      const email = 'info@sirketadi.com'; // Buraya kendi mail adresini yazabilirsin.
-      const subject = encodeURIComponent('Puantajım - İstek ve Öneri');
-      const body = encodeURIComponent(`Kullanıcı: ${session?.user?.email || userEmail || 'Bilinmiyor'}\n\nMesaj:\n${feedbackText}`);
+      const email = session?.user?.email || userEmail || 'Bilinmiyor';
       
-      const url = `mailto:${email}?subject=${subject}&body=${body}`;
+      const { error } = await supabase.from('feedbacks').insert([
+        { 
+          user_email: email, 
+          message: feedbackText,
+          target_email: 'gokhaancaliskan@gmail.com'
+        }
+      ]);
       
-      const canOpen = await Linking.canOpenURL(url);
-      if (canOpen) {
-        await Linking.openURL(url);
-        setFeedbackText('');
-        setFeedbackModalVisible(false);
-      } else {
-        Alert.alert('Hata', 'Telefonunuzda kurulu bir mail uygulaması bulunamadı.');
+      if (error) {
+        throw error;
       }
+      
+      Alert.alert('Başarılı', 'Mesajınız başarıyla iletildi! Teşekkür ederiz.');
+      setFeedbackText('');
+      setFeedbackModalVisible(false);
     } catch(err) {
-      Alert.alert('Hata', 'Mail uygulaması açılırken bir sorun oluştu.');
+      Alert.alert('Hata', 'Mesaj gönderilirken bir sorun oluştu. Veritabanınızda (Supabase) "feedbacks" adında bir tablo olduğundan emin olun.');
       console.log(err);
+    } finally {
+      setIsSendingFeedback(false);
     }
   };
 
@@ -265,6 +271,7 @@ export default function ProfileScreen() {
     if (adminPasswordInput === correctPassword) {
       setAdminPasswordModalVisible(false);
       setAdminPasswordInput('');
+      await AsyncStorage.setItem('isAdminDevice', 'true');
       router.push('/admin');
     } else {
       Alert.alert('Hata', 'Hatalı şifre girdiniz.');
@@ -500,7 +507,7 @@ export default function ProfileScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Yönetici Girişi</Text>
-            <Text style={styles.inputLabel}>Yönetici Şifresi (Varsayılan: 6224):</Text>
+            <Text style={styles.inputLabel}>Yönetici Şifresi:</Text>
             <TextInput 
               style={styles.textInput}
               secureTextEntry
@@ -586,10 +593,10 @@ const styles = StyleSheet.create({
   valueText: { color: Colors.lightText, marginRight: 8, fontSize: 14 },
   divider: { height: 1, backgroundColor: Colors.border, marginVertical: 12, marginLeft: 52 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { width: '80%', backgroundColor: '#FFF', borderRadius: 20, padding: 24 },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 16, textAlign: 'center' },
-  inputLabel: { fontSize: 14, color: '#4B5563', marginBottom: 8, fontWeight: '600' },
-  textInput: { borderWidth: 1, borderColor: '#D1D5DB', borderRadius: 10, padding: 12, fontSize: 16, marginBottom: 16 },
+  modalContent: { width: '80%', backgroundColor: Colors.card, borderRadius: 20, padding: 24 },
+  modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 16, textAlign: 'center', color: Colors.text },
+  inputLabel: { fontSize: 14, color: Colors.text, marginBottom: 8, fontWeight: '600' },
+  textInput: { borderWidth: 1, borderColor: Colors.border, borderRadius: 10, padding: 12, fontSize: 16, marginBottom: 16, color: Colors.text },
   modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
   modalBtn: { flex: 1, paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginHorizontal: 6 }
 });

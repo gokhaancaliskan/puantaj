@@ -65,4 +65,13 @@ v1.8.0
 - **Güvenlik (Cihaz ID Eşleştirme):** Hesaplar artık giriş yapılan cihaza kilitleniyor. Başkasının telefonuyla kendi hesabınıza giriş yapıp asılsız (fake) puantaj kaydı oluşturulması engellendi. (Anti-Fraud Sistemi)
 - **Hızlı Giriş (Wi-Fi Doğrulaması):** Ayarlar sekmesine "İş Yeri Wi-Fi'ı Kaydet" butonu eklendi. Artık iş yerinizin ağına bağlı olduğunuzda, konumun bulunmasını veya GPS mesafesini beklemeden giriş/çıkış yapabileceksiniz.
 
+v1.9.0
+- Geçmiş sekmesinde listeleme yaparken (keyExtractor hatası yüzünden) uygulamanın aniden çökmesi sorunu giderildi.
+- Rapor ekranındaki sekme ve yazı renkleri cihazın Koyu / Açık tema ayarlarına (dinamik renklere) tam uyumlu hale getirildi, artık yazılar her iki temada da rahatlıkla okunabiliyor.
+- İstek ve Öneri gönderme kısmı güncellendi; artık cihazın e-posta uygulamasını açmak yerine, doğrudan uygulamanın içinden Supabase veritabanına mesaj gönderiliyor.
+- Yönetici (Admin) giriş ekranındaki şifrenin görünmez (noktalı) olması sağlandı, varsayılan şifre metni ekrandan kaldırıldı ve koyu temadaki okunamayan yazılar düzeltildi.
+- Yönetici paneline (Admin ekranı), Supabase'e kaydedilen tüm kullanıcıların giriş/çıkış verilerini görebilecekleri canlı bir liste eklendi.
 
+v1.9.1
+- Yönetici paneline "Gelen İstek ve Öneriler" (Feedbacks) listesi eklendi. Yöneticiler, kullanıcıların attığı mesajları artık doğrudan uygulama içinden görebiliyor.
+- İstek ve Öneri gönderildiğinde, "Yönetici" olarak şifre ile sisteme giriş yapmış cihazlara anında "Yeni İstek ve Öneri Geldi!" şeklinde anlık bildirim (push notification) düşecek şekilde Gerçek Zamanlı (Realtime) altyapısı eklendi.

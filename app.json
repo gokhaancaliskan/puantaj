@@ -3,7 +3,7 @@
     "name": "puantaj",
     "slug": "puantaj",
     "scheme": "puantaj",
-    "version": "1.8.0",
+    "version": "1.9.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -20,14 +20,24 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.arge16.puantaj"
+      "package": "com.arge16.puantaj",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBIuB4VKarRd6K6FXjTGxrJO8eKyAdoz24"
+        }
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-router",
-      "expo-location",
+      [
+        "expo-location",
+        {
+          "isAndroidBackgroundLocationEnabled": true
+        }
+      ],
       "expo-font",
       [
         "react-native-android-widget",

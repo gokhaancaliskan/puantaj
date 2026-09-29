@@ -11,6 +11,7 @@ import { recordPunch } from '../database/recordPunch';
 import { supabase } from '../database/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Feather } from '@expo/vector-icons';
+import { scheduleLocalNotification } from '../utils/notifications';
 
 export default function RootLayout() {
   const [appReady, setAppReady] = useState(false);
@@ -39,7 +40,7 @@ export default function RootLayout() {
         if (appTheme === 'dark' || appTheme === 'light') {
           Appearance.setColorScheme(appTheme as any);
         } else {
-          Appearance.setColorScheme(null);
+          Appearance.setColorScheme('system' as any);
         }
 
         // Check if "Remember Me" session is still valid
@@ -141,9 +142,22 @@ export default function RootLayout() {
       }
     });
 
+    // Listen to incoming feedbacks in Realtime for Admin Notifications
+    const feedbackSubscription = supabase
+      .channel('feedbacks_channel')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'feedbacks' }, async (payload) => {
+        const isAdmin = await AsyncStorage.getItem('isAdminDevice');
+        if (isAdmin === 'true') {
+          const userEmail = payload.new.user_email || 'Bir kullanıcı';
+          await scheduleLocalNotification('Yeni İstek ve Öneri!', `${userEmail} bir mesaj gönderdi.`);
+        }
+      })
+      .subscribe();
+
     return () => {
       subscription.unsubscribe();
       responseListener.remove();
+      supabase.removeChannel(feedbackSubscription);
     };
   }, []);
 
