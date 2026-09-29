@@ -5,15 +5,18 @@ interface PunchWidgetProps {
   punchType?: 'in' | 'out';
   lastPunchTime?: string | null;
   elapsedStr?: string | null;
+  weatherEmoji?: string | null;
+  weatherTemp?: string | null;
 }
 
-export function PunchWidget({ punchType = 'in', lastPunchTime = null, elapsedStr = null }: PunchWidgetProps) {
+export function PunchWidget({ punchType = 'in', lastPunchTime = null, elapsedStr = null, weatherEmoji = null, weatherTemp = null }: PunchWidgetProps) {
   const isCheckedIn = punchType === 'out';
-  // Use app's brand colors
-  const actionColor = isCheckedIn ? '#EF4444' : '#2563EB'; // Red for Exit, Primary Blue for Enter
-  const actionText = isCheckedIn ? 'Çıkış Yap' : 'Giriş Yap';
-  const statusText = isCheckedIn ? '● Aktif Mesai' : '○ Mesai Dışı';
-  const statusColor = isCheckedIn ? '#10B981' : '#64748B';
+  const actionColor = isCheckedIn ? '#EF4444' : '#4F46E5'; 
+  const actionText = isCheckedIn ? 'ÇIKIŞ YAP' : 'GİRİŞ YAP';
+  
+  const now = new Date();
+  const dateStr = `${now.getDate().toString().padStart(2, '0')}.${(now.getMonth() + 1).toString().padStart(2, '0')}.${now.getFullYear()}`;
+  const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
   return (
     <FlexWidget
@@ -22,92 +25,47 @@ export function PunchWidget({ punchType = 'in', lastPunchTime = null, elapsedStr
         width: 'match_parent',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        backgroundColor: '#FFFFFF', // Modern light card
+        backgroundColor: '#FFFFFF',
         borderRadius: 24,
         padding: 16,
       }}
     >
-      {/* Header */}
-      <FlexWidget
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 4,
-        }}
-      >
-        <TextWidget
-          text="Puantajım"
-          style={{
-            fontSize: 15,
-            fontFamily: 'System',
-            color: '#334155',
-            fontWeight: 'bold',
-          }}
-        />
-        <FlexWidget
-          style={{
-            backgroundColor: isCheckedIn ? '#D1FAE5' : '#F1F5F9',
-            paddingHorizontal: 8,
-            paddingVertical: 4,
-            borderRadius: 12,
-          }}
-        >
-          <TextWidget
-            text={statusText}
-            style={{
-              fontSize: 12,
-              color: statusColor,
-              fontWeight: 'bold',
-            }}
-          />
+      <FlexWidget style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <FlexWidget style={{ flexDirection: 'column' }}>
+          <TextWidget text={timeStr} style={{ fontSize: 28, color: '#1E293B', fontWeight: 'bold' }} />
+          <TextWidget text={dateStr} style={{ fontSize: 13, color: '#64748B', fontWeight: 'bold' }} />
         </FlexWidget>
+        
+        {weatherEmoji && (
+          <FlexWidget style={{ flexDirection: 'column', alignItems: 'center', backgroundColor: '#F8FAFC', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 }}>
+            <TextWidget text={weatherEmoji} style={{ fontSize: 20 }} />
+            <TextWidget text={weatherTemp || ''} style={{ fontSize: 12, color: '#475569', fontWeight: 'bold', marginTop: 2 }} />
+          </FlexWidget>
+        )}
       </FlexWidget>
 
-      {/* Last punch time */}
-      <FlexWidget style={{ flexDirection: 'column', marginBottom: 12 }}>
+      <FlexWidget style={{ flexDirection: 'column', marginTop: 12, marginBottom: 12, alignItems: 'center' }}>
         <TextWidget
-          text={elapsedStr ? elapsedStr : "Son İşlem:"}
+          text={elapsedStr ? elapsedStr : (lastPunchTime || 'Kayıt Bekleniyor')}
           style={{
-            fontSize: 12,
-            color: elapsedStr ? '#2563EB' : '#94A3B8',
-            fontFamily: 'System',
-            fontWeight: elapsedStr ? 'bold' : 'normal',
-            marginBottom: 2,
-          }}
-        />
-        <TextWidget
-          text={lastPunchTime ? lastPunchTime : 'Henüz kayıt yok'}
-          style={{
-            fontSize: 14,
-            color: '#1E293B',
-            fontFamily: 'System',
+            fontSize: elapsedStr ? 16 : 14,
+            color: elapsedStr ? actionColor : '#64748B',
             fontWeight: 'bold',
           }}
         />
       </FlexWidget>
 
-      {/* Action Button */}
       <FlexWidget
         clickAction="PUNCH_ACTION"
         style={{
           backgroundColor: actionColor,
-          borderRadius: 16,
+          borderRadius: 18,
           paddingVertical: 14,
-          paddingHorizontal: 16,
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        <TextWidget
-          text={actionText}
-          style={{
-            fontSize: 16,
-            color: '#FFFFFF',
-            fontWeight: 'bold',
-            fontFamily: 'System',
-          }}
-        />
+        <TextWidget text={actionText} style={{ fontSize: 16, color: '#FFFFFF', fontWeight: 'bold' }} />
       </FlexWidget>
     </FlexWidget>
   );
@@ -120,47 +78,27 @@ interface DetailWidgetProps {
 
 export function DetailWidget({ punchType = 'in', elapsedStr = null }: DetailWidgetProps) {
   const isCheckedIn = punchType === 'out';
-  const actionColor = isCheckedIn ? '#EF4444' : '#2563EB';
-  const actionText = isCheckedIn ? 'Çıkış Yap' : 'Giriş Yap';
+  const actionColor = isCheckedIn ? '#EF4444' : '#4F46E5';
+  const actionText = isCheckedIn ? 'ÇIKIŞ YAP' : 'GİRİŞ YAP';
 
   return (
     <FlexWidget
+      clickAction="PUNCH_ACTION"
       style={{
         height: 'match_parent',
         width: 'match_parent',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         alignItems: 'center',
-        flexDirection: 'row',
-        backgroundColor: '#FFFFFF',
+        flexDirection: 'column',
+        backgroundColor: actionColor,
         borderRadius: 24,
-        paddingHorizontal: 20,
+        padding: 8,
       }}
     >
-      <FlexWidget style={{ flexDirection: 'column', justifyContent: 'center' }}>
-        <TextWidget
-          text="Puantajım"
-          style={{ fontSize: 18, color: '#1E293B', fontWeight: 'bold' }}
-        />
-        <TextWidget
-          text={elapsedStr ? elapsedStr : "İşlem bekliyor"}
-          style={{ fontSize: 13, color: elapsedStr ? '#2563EB' : '#64748B', marginTop: 2, fontWeight: elapsedStr ? 'bold' : 'normal' }}
-        />
-      </FlexWidget>
-
-      <FlexWidget
-        clickAction="PUNCH_ACTION"
-        style={{
-          backgroundColor: actionColor,
-          borderRadius: 16,
-          paddingHorizontal: 16,
-          paddingVertical: 12,
-        }}
-      >
-        <TextWidget
-          text={actionText}
-          style={{ color: '#FFFFFF', fontSize: 15, fontWeight: 'bold' }}
-        />
-      </FlexWidget>
+      <TextWidget text={actionText} style={{ color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' }} />
+      {elapsedStr && (
+        <TextWidget text={elapsedStr} style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, marginTop: 4, fontWeight: 'bold' }} />
+      )}
     </FlexWidget>
   );
 }

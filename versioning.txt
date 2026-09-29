@@ -108,3 +108,38 @@ v1.9.7
 - Ã‡Ä±ktÄ± alma sistemi baÅŸtan yazÄ±larak CSV yerine tamamen uyumlu **Excel (.xlsx)** formatÄ±na geÃ§irildi.
 - Ä°ÅŸ yeri konumu ayarlama ekranÄ±na Ã§ap (yarÄ±Ã§ap - 50m, 100m, 200m) seÃ§me Ã¶zelliÄŸi eklendi. Uygulama artÄ±k seÃ§ilen Ã§apa gÃ¶re otomatik giriÅŸ-Ã§Ä±kÄ±ÅŸ yapacak.
 - Ä°lk aÃ§Ä±lÄ±ÅŸta gÃ¶sterilen "Uygulama Rehberi (NasÄ±l KullanÄ±lÄ±r?)" ekranÄ±na Profil > Ayarlar menÃ¼sÃ¼nden tekrar ulaÅŸÄ±labilmesi iÃ§in buton eklendi.
+
+v1.9.8
+- AynÄ± gÃ¼n iÃ§inde birden fazla giriÅŸ/Ã§Ä±kÄ±ÅŸ yapÄ±ldÄ±ÄŸÄ±nda serinin 2 gÃ¼n artmasÄ± sorunu dÃ¼zeltildi.
+- CSV ve PDF dÄ±ÅŸa aktarÄ±lÄ±rken dosya kaydetme ve paylaÅŸma hatasÄ± dÃ¼zeltildi.
+
+v1.9.9
+- Uygulama adÄ± "Puantajim" olarak gÃ¼ncellendi.
+- Bildirim sistemi kontrol edildi.
+- Local (Lokal) APK oluÅŸturma (prebuild) Ã¶zelliÄŸi entegre edildi.
+- Sistem temasÄ± seÃ§iliyken uygulamanÄ±n aÃ§Ä±lÄ±ÅŸta Ã§Ã¶kmesine sebep olan renk temasÄ± hatasÄ± (NullPointerException) tamamen giderildi.
+
+
+v1.9.10
+- C++ ve React Native 0.86 surum uyusmazligindan kaynakli kirmizi ekran hatasi ve uygulama cokmesi expo-av kutuphanesi degistirilerek giderildi.
+- Giris ve cikis yap butonlarina titresim (haptics) ve ses (expo-audio) eklendi. Ses, cihaz sessizdeyken calmayacak sekilde ayarlandi.
+- Rapor sayfasinda Excel disa aktarma (writeAsStringAsync) hatasi duzeltildi.
+- Ayarlar sayfasindan 'Istek ve Oneri' gonderirken alinan veritabani (Supabase) hatasi giderildi.
+- Konum servisinden gelen 'GPS Sicramalari' yuzunden otomatik atilan yanlis bildirim sorunu giderildi (Manuel konum dogrulama eklendi).
+
+
+v1.9.11
+- Ses ve titresim uyarilari bilesen icine alinarak calismasi garanti altina alindi.
+- Raporlardaki Excel disa aktarma (writeAsStringAsync) butonu metni Excel Olarak Disa Aktar seklinde guncellendi ve sistem hatalari giderildi.
+- Istek ve Oneri formundaki (user_email) veritabani hata engeli tamamiyle kaldirildi.
+- Gecmis Kayitlar (history.tsx) ve Raporlar sayfasindaki UI dizayni premium seviyeye (Golgeler, renk paletleri ve modern hatlar) yukseltildi.
+
+v1.9.12
+- (Faz 1) Ses ve titreşim mekanizması güçlendirildi (Heavy Impact). Uygulama ayarlarına 'Giriş/Çıkış Sesleri Açık/Kapalı' seçeneği eklendi.
+- (Faz 1) Geçmiş kayıtlar sayfası (history.tsx) gereksiz büyük kartlardan arındırılarak, ince ve çok daha profesyonel (premium) bir tasarıma geçirildi.
+- (Faz 1) Uygulama rehberi (UYGULAMA_REHBERI.md) ve Profil'deki giriş ekranı tamamen profesyonel (kurumsal) bir dille yeniden yazıldı.
+
+v1.9.13
+- (Faz 2) Widget'lar baştan aşağı yenilendi. Ana widget artık saat, tarih, anlık hava durumu (emojili) ve net çalışma süresini şık bir premium kart olarak sunuyor. Minimal widget (DetailWidget) da çok sade hale getirildi.
+- (Faz 3) Raporların (Excel ve PDF) daha resmi olması için 'Ad-Soyad' zorunluluğu getirildi. Uygulamaya ilk girişte (veya bilgi yoksa) otomatik modal ile ad-soyad istenip kaydediliyor.
+- (Faz 3) Ay bittiğinde yeni aya geçişte, uygulamaya girildiğinde otomatik olarak 'Geçen Ayın Raporunu Dışa Aktarmak İster Misiniz?' şeklinde kullanıcıya akıllı hatırlatıcı bildirim (Alert) çıkartılması sağlandı.

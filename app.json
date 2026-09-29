@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "puantaj",
-    "slug": "puantaj",
-    "scheme": "puantaj",
-    "version": "1.9.8",
+    "name": "Puantajim",
+    "slug": "puantajim",
+    "scheme": "puantajim",
+    "version": "1.9.13",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -20,6 +20,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "newArchEnabled": false,
       "package": "com.arge16.puantaj",
       "config": {
         "googleMaps": {

@@ -40,7 +40,7 @@ export default function RootLayout() {
         if (appTheme === 'dark' || appTheme === 'light') {
           Appearance.setColorScheme(appTheme as any);
         } else {
-          Appearance.setColorScheme('system' as any);
+          Appearance.setColorScheme((Appearance.getColorScheme() || 'light') as any);
         }
 
         // Check if "Remember Me" session is still valid

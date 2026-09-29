@@ -1,45 +1,41 @@
-# Puantaj Uygulaması Kullanım Rehberi
+# Puantajim Uygulaması Kullanım Kılavuzu
 
-Bu rehber, Puantaj uygulamasının sunduğu özellikleri ve uygulamayı nasıl kullanacağınızı detaylandırmaktadır.
+Bu doküman, Puantajim uygulamasının temel özelliklerini ve kullanım standartlarını açıklamaktadır.
 
-## Temel Özellikler
-1. **Günlük Giriş ve Çıkış (Puantaj) Takibi**
-   - Uygulamanın ana ekranında bulunan butona basılı tutarak işe "Giriş Yap" ve işten "Çıkış Yap" işlemlerinizi hızlıca gerçekleştirebilirsiniz.
-   - Bulunduğunuz konum otomatik olarak alınır. İş yerine (belirlenen koordinatlara) 300 metreden daha uzaktaysanız, sistem size "Uzaktan Giriş/Çıkış yapmak istediğinize emin misiniz?" şeklinde bir uyarı gösterir.
+## 1. Temel Kurulum ve Konum Doğrulaması
 
-2. **Geçmiş Kayıtlar ve Manuel Ekleme**
-   - **Geçmiş** sekmesinde, daha önce yaptığınız tüm giriş ve çıkış kayıtlarınızı görebilirsiniz.
-   - Giriş yapmayı veya çıkış yapmayı unuttuğunuz durumlarda Ana Ekrandaki **"+ Ekle"** butonunu veya geçmişi kullanarak manuel giriş/çıkış saati ekleyebilirsiniz.
-   - Örneğin; saat 09:00'da işe geldiniz ama uygulamadan giriş yapmayı unuttunuz. Saat 14:00'da uygulamaya girip "Manuel Ekle" seçeneğiyle sadece 09:00 girişini eklerseniz, ana sayfadaki buton otomatik olarak **"Çıkış Yap"** şekline dönüşür.
+Uygulamanın doğru bir şekilde kayıt alabilmesi için ilk kurulum aşamasında iş yeri konumunun doğrulanması gerekmektedir:
+* **İş Yeri Konumunun Belirlenmesi:** Profil ekranında bulunan "İş Konumunu Güncelle" menüsü aracılığıyla iş yerinizin koordinatlarını harita üzerinden seçiniz. Bu aşamada konum hassasiyeti için geçerli yarıçapı (50m, 100m, 200m) belirlemeniz istenecektir.
+* **Wi-Fi Eşleştirme (Alternatif Doğrulama):** GPS sinyalinin zayıf olduğu kapalı alanlarda doğrulama sağlayabilmek için Profil menüsünden "Şu anki Wi-Fi'ı Kaydet" seçeneğiyle iş yeri ağınızı sisteme tanıtabilirsiniz.
+* **Çalışma Parametreleri:** Profil > "Mesai Saatleri" bölümünden haftalık çalışma standartlarınızı (örn. Hafta içi: 9 saat) ve varsa saatlik ücretinizi tanımlayınız. Bu veriler ay sonu raporlamalarında baz alınacaktır.
 
-3. **İzinli / Tatil Günleri**
-   - Ana ekranda bulunan **"İzinliyim/Hastayım"** butonu ile bulunduğunuz günü izinli olarak işaretleyebilirsiniz.
-   - Geçmiş ekranında herhangi bir kaydın üzerine uzun basarak o günü "Tatil" veya "İzinli" olarak değiştirebilir ya da geri alabilirsiniz. İzinli günler mesai hesaplamasından düşülür.
-   - Uygulama resmi tatilleri otomatik tanır (örn. 29 Ekim, 1 Mayıs) ve o günlerde izin rozeti gösterir.
+## 2. Giriş ve Çıkış İşlemleri (Puantaj Kaydı)
 
-4. **Detaylı Raporlar**
-   - **Raporlar** sekmesi sadeleştirilmiştir: **Bugün**, **Bu Hafta** ve **Bu Ay** olmak üzere üç ayrı görünüm sunar.
-   - Normal mesai saatiniz (hafta içi ve cumartesi için belirlenen süre) üzerinden ne kadar eksik veya fazla çalıştığınızı saat ve dakika cinsinden anlık görebilirsiniz (örn. `2s 9d Fazla Mesai`).
+Günlük puantaj kayıtları Ana Ekran üzerinden gerçekleştirilir:
+1. **Giriş İşlemi:** Ekranda yer alan "Giriş İçin Basılı Tut" butonuna sistem geri bildirimi (titreşim/ses) gelene dek basılı tutunuz. 
+2. **Çıkış İşlemi:** Aktif bir mesai başladıktan sonra buton durumu güncellenir. Mesai bitiminde "Çıkış İçin Basılı Tut" butonuna basılı tutarak işlemi sonlandırınız.
 
-5. **Ayarlar ve Kişiselleştirme**
-   - **Profil** sekmesinden uygulamanın dilini (Türkçe/İngilizce) ve temasını (Açık/Koyu/Sistem) değiştirebilirsiniz.
-   - **Mesai Saatleri** bölümünden hafta içi ve cumartesi için günlük çalışmanız gereken net süreyi, ve standart giriş-çıkış saatlerini (örn. 08:30 - 18:00) ayarlayabilirsiniz.
-   - Bildirimler, sizin belirlediğiniz giriş ve çıkış saatlerinden **10 dakika önce** size "İşe giriş/çıkış yapmayı unutmayın" şeklinde hatırlatma gönderir.
+**Not:** Tanımlanan konum (veya Wi-Fi ağı) dışında gerçekleştirilmeye çalışılan işlemler sistem tarafından engellenecek veya uzak çıkış uyarı prosedürüne tabi tutulacaktır.
 
-6. **Yönetim (Admin) Paneli**
-   - Gizli bir yönetim paneli mevcuttur. Sadece Profil sekmesindeki **Avatar (Profil Resmi) üzerine art arda 7 kere dokunarak** bu menüye erişilebilir.
-   - Bu menüde; gelecekte aktif edilecek olan **QR Kod ile Giriş** ve **NFC ile Giriş** gibi donanımsal özelliklerin ayarları bulunur. 
+## 3. Geçmiş Kayıtların Yönetimi ve Manuel Ekleme
 
-7. **Uygulama Rehberi (Onboarding)**
-   - Uygulamayı ilk kurduğunuzda karşınıza çıkan görsel kullanım rehberine, dilediğiniz zaman Profil sekmesindeki **"Uygulama Rehberi"** menüsünden tekrar ulaşabilirsiniz.
+Sistem dışında kalan veya unutulan işlemlerin düzenlenmesi mümkündür:
+* **Manuel Kayıt Ekleme:** Ana ekrandaki liste başlığında bulunan "+ Ekle" butonunu kullanarak geçmişe dönük manuel giriş/çıkış saati ekleyebilirsiniz.
+* **Kayıt Düzenleme:** Geçmiş kayıtlar listesinde hatalı olduğunu düşündüğünüz ilgili satıra tıklayarak saat ve not düzenlemesi gerçekleştirebilirsiniz.
 
-## Sık Sorulan Sorular
+## 4. İzin ve Tatil Günleri
 
-**S: Giriş yapmayı unuttum, manuel olarak nasıl eklerim?**
-C: Ana ekrandaki `+ Ekle` butonuna basın. Açılan ekranda "Giriş Saati" kısmına geldiğiniz saati (örneğin 09:00) yazın. "Çıkış Saati" kısmını boş bırakıp kaydedin. Artık ana ekrandaki buton "Çıkış Yap" olarak görünecektir. Akşam çıkarken normal şekilde butona basılı tutarak çıkışınızı yapabilirsiniz.
+Mesai hesaplamalarının doğru yapılabilmesi için çalışılmayan günlerin sisteme bildirilmesi gerekmektedir:
+* **Günlük İzin Bildirimi:** Ana ekranda yer alan "Bugün İzinliyim / Hastayım" butonunu kullanarak mevcut günü izinli statüsüne alabilirsiniz.
+* **Geçmiş İzin Kayıtları:** Geçmiş listedeki herhangi bir kayda basılı tutarak (uzun basma) ilgili günün statüsünü "İzinli/Tatil" olarak güncelleyebilirsiniz. Sistem, resmi tatil günlerini otomatik olarak tanımlamaktadır.
 
-**S: Uygulama versiyonumu nereden görebilirim?**
-C: Uygulama versiyonu, Ana Sayfa'nın (Puantaj ekranının) en altında gri metin olarak yazar.
+## 5. Raporlama ve Dışa Aktarma
 
-**S: Raporlarda çalışma saatim neden eksik görünüyor?**
-C: Profil -> Mesai Saatleri menüsünden günlük çalışmanız gereken saati doğru girdiğinizden emin olun. Ayrıca gün içindeki giriş-çıkışlarınızı geçmiş sayfasından kontrol edin, eksik bir "Çıkış" kaydınız varsa o günün mesaisi eksik hesaplanabilir.
+Gerçekleşen çalışma süreleri ve fazla/eksik mesai analizleri "Raporlar" sekmesinden takip edilebilir:
+* **Periyodik Görüntüleme:** Ekranın üst bölümündeki sekmelerden Bugün, Bu Hafta veya Bu Ay görünümlerine geçiş yapabilirsiniz.
+* **Dışa Aktarma (Excel/PDF):** İlgili döneme ait puantaj tablosunu "Excel Olarak Dışa Aktar" veya "PDF Olarak Dışa Aktar" seçenekleriyle cihazınıza indirebilir veya ilgili kurumsal departmanlara iletebilirsiniz. Oluşturulan raporlar, girdiğiniz saatlik ücret parametreleri üzerinden finansal özet de içermektedir.
+
+## 6. Sistem Ayarları
+
+* **Karanlık Tema Modu:** Profil > Tema menüsü üzerinden uygulama arayüzünü göz yormayan karanlık moda geçirebilirsiniz.
+* **Geri Bildirim:** Sistemde karşılaştığınız hataları veya geliştirme taleplerini yine Profil sekmesindeki İstek & Öneri formu üzerinden teknik ekibe iletebilirsiniz.

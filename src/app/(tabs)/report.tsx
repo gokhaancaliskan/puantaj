@@ -6,7 +6,7 @@ import { WorkRecord } from '../../database/recordPunch';
 import { useFocusEffect } from 'expo-router';
 import { getPublicHolidayName } from '../../utils/holidays';
 import * as Sharing from 'expo-sharing';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Print from 'expo-print';
 
 export default function ReportScreen() {
@@ -218,7 +218,9 @@ export default function ReportScreen() {
   const exportData = async () => {
     try {
       const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      const userEmail = await AsyncStorage.getItem('userEmail') || 'Bilinmiyor';
+      const fName = await AsyncStorage.getItem('firstName');
+      const lName = await AsyncStorage.getItem('lastName');
+      const userFullName = (fName && lName) ? `${fName} ${lName}` : (await AsyncStorage.getItem('userEmail') || 'Bilinmiyor');
 
       const whStr = await AsyncStorage.getItem('weekdayHours');
       const shStr = await AsyncStorage.getItem('saturdayHours');
@@ -296,7 +298,7 @@ export default function ReportScreen() {
           }
           
           return [
-            userEmail, 
+            userFullName, 
             dateWithDay, 
             inTime, 
             outTime, 
@@ -338,7 +340,9 @@ export default function ReportScreen() {
   const exportPdf = async () => {
     try {
       const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      const userEmail = await AsyncStorage.getItem('userEmail') || 'Bilinmiyor';
+      const fName = await AsyncStorage.getItem('firstName');
+      const lName = await AsyncStorage.getItem('lastName');
+      const userFullName = (fName && lName) ? `${fName} ${lName}` : (await AsyncStorage.getItem('userEmail') || 'Bilinmiyor');
 
       const whStr = await AsyncStorage.getItem('weekdayHours');
       const shStr = await AsyncStorage.getItem('saturdayHours');
@@ -357,7 +361,7 @@ export default function ReportScreen() {
             </style>
           </head>
           <body>
-            <h1>Puantaj Raporu</h1>
+            <h1>${userFullName} - Puantaj Raporu</h1>
             <table>
               <tr><th>Tarih</th><th>Giriş</th><th>Çıkış</th><th>Gün Tipi</th><th>Tatil / İzin</th><th>Gerçekleşen</th><th>Normal Fark</th><th>Hak Edilen</th></tr>
               ${(() => {
@@ -551,7 +555,7 @@ export default function ReportScreen() {
       )}
 
       <Pressable style={styles.button} onPress={exportData}>
-        <Text style={styles.buttonText}>CSV Olarak Dışa Aktar</Text>
+        <Text style={styles.buttonText}>Excel Olarak Dışa Aktar</Text>
       </Pressable>
       <Pressable style={[styles.button, { marginTop: 0, backgroundColor: (Colors as any).secondary || '#5e5ce6' }]} onPress={exportPdf}>
         <Text style={styles.buttonText}>PDF Olarak Dışa Aktar</Text>

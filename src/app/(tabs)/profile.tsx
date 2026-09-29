@@ -30,6 +30,7 @@ export default function ProfileScreen() {
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [hasBiometricHardware, setHasBiometricHardware] = useState(false);
   const [notifyOnHolidays, setNotifyOnHolidays] = useState(true);
+  const [isSoundEnabled, setIsSoundEnabled] = useState(true);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -80,6 +81,9 @@ export default function ProfileScreen() {
     AsyncStorage.getItem('notifyOnHolidays').then(val => {
       if (val !== null) setNotifyOnHolidays(val === 'true');
     });
+    AsyncStorage.getItem('isMuted').then(val => {
+      if (val !== null) setIsSoundEnabled(val !== 'true');
+    });
 
     LocalAuthentication.hasHardwareAsync().then(hasHardware => {
       if (hasHardware) {
@@ -108,7 +112,7 @@ export default function ProfileScreen() {
 
     setThemeMode(next);
     await AsyncStorage.setItem('appTheme', next);
-    Appearance.setColorScheme(next === 'system' ? 'system' as any : next);
+    Appearance.setColorScheme(next === 'system' ? (Appearance.getColorScheme() || 'light') as any : next);
     
     Alert.alert(
       t('theme'), 
@@ -159,6 +163,11 @@ export default function ProfileScreen() {
     scheduleNotificationsForWeek().catch((e: any) => console.log(e));
   };
 
+  const toggleSound = async (value: boolean) => {
+    setIsSoundEnabled(value);
+    await AsyncStorage.setItem('isMuted', (!value).toString());
+  };
+
   const handleSync = async () => {
     try {
       setIsSyncing(true);
@@ -183,9 +192,7 @@ export default function ProfileScreen() {
       
       const { error } = await supabase.from('feedbacks').insert([
         { 
-          user_email: email, 
-          message: feedbackText,
-          target_email: 'gokhaancaliskan@gmail.com'
+          message: feedbackText
         }
       ]);
       
@@ -386,6 +393,22 @@ export default function ProfileScreen() {
           <Switch 
             value={notifyOnHolidays}
             onValueChange={toggleNotifyOnHolidays}
+            trackColor={{ false: '#D1D5DB', true: Colors.primary }}
+          />
+        </View>
+
+        <View style={styles.divider} />
+        
+        <View style={styles.menuItem}>
+          <View style={styles.menuRow}>
+            <View style={[styles.iconBox, { backgroundColor: '#EAB308' }]}>
+              <Feather name="volume-2" size={20} color="#fff" />
+            </View>
+            <Text style={styles.menuItemText}>Giriş/Çıkış Sesleri Açık</Text>
+          </View>
+          <Switch 
+            value={isSoundEnabled}
+            onValueChange={toggleSound}
             trackColor={{ false: '#D1D5DB', true: Colors.primary }}
           />
         </View>

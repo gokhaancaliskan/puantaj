@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, FlatList, Pressable, Alert } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { useEffect, useState, useCallback } from 'react';
 import { Colors } from '../../constants/Colors';
 import { getDb } from '../../database/db';
@@ -76,39 +77,50 @@ export default function HistoryScreen() {
 
   const renderItem = ({ item }: { item: WorkRecord }) => {
     const isMissing = (item.check_in_timestamp && !item.check_out_timestamp) || (!item.check_in_timestamp && item.check_out_timestamp);
-    const bgColor = item.is_leave_day ? Colors.border : (isMissing ? '#3D2020' : Colors.card);
-    const borderColor = isMissing ? Colors.error : Colors.border;
+    const bgColor = item.is_leave_day ? '#F3F4F6' : (isMissing ? '#FEF2F2' : Colors.card);
+    const borderColor = item.is_leave_day ? '#D1D5DB' : (isMissing ? Colors.error : 'transparent');
 
     return (
       <Pressable 
         onLongPress={() => handleLongPress(item)}
-        style={[styles.card, { backgroundColor: bgColor, borderColor }]}
+        style={[styles.card, { backgroundColor: bgColor, borderColor: borderColor, borderWidth: isMissing || item.is_leave_day ? 1 : 0 }]}
       >
         <View style={styles.cardHeader}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.dateText}>{item.date}</Text>
-            {getPublicHolidayName(item.date) ? (
-              <Text style={{ fontSize: 12, color: Colors.primary, marginTop: 4, fontWeight: 'bold' }}>
-                {getPublicHolidayName(item.date)}
-              </Text>
-            ) : null}
+          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+            <View style={[styles.iconContainer, { backgroundColor: item.is_leave_day ? '#D1D5DB' : (isMissing ? '#FCA5A5' : '#E0E7FF') }]}>
+              <Feather name={item.is_leave_day ? "coffee" : (isMissing ? "alert-circle" : "calendar")} size={20} color={item.is_leave_day ? "#4B5563" : (isMissing ? "#991B1B" : Colors.primary)} />
+            </View>
+            <View>
+              <Text style={styles.dateText}>{item.date}</Text>
+              {getPublicHolidayName(item.date) ? (
+                <Text style={{ fontSize: 12, color: Colors.primary, marginTop: 2, fontWeight: 'bold' }}>
+                  {getPublicHolidayName(item.date)}
+                </Text>
+              ) : null}
+            </View>
           </View>
           {item.is_leave_day ? <Text style={styles.leaveBadge}>İZİNLİ / TATİL</Text> : null}
         </View>
         
-        <View style={styles.timeContainer}>
-          <View style={styles.timeBox}>
-            <Text style={styles.timeLabel}>Giriş</Text>
-            <Text style={styles.timeValue}>{formatTime(item.check_in_timestamp)}</Text>
+        {!item.is_leave_day && (
+          <View style={styles.timeContainer}>
+            <View style={styles.timeBox}>
+              <Text style={styles.timeLabel}>Giriş</Text>
+              <Text style={styles.timeValue}>{formatTime(item.check_in_timestamp)}</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.timeBox}>
+              <Text style={styles.timeLabel}>Çıkış</Text>
+              <Text style={styles.timeValue}>{formatTime(item.check_out_timestamp)}</Text>
+            </View>
           </View>
-          <View style={styles.timeBox}>
-            <Text style={styles.timeLabel}>Çıkış</Text>
-            <Text style={styles.timeValue}>{formatTime(item.check_out_timestamp)}</Text>
-          </View>
-        </View>
+        )}
 
         {(isMissing && !item.is_leave_day) ? (
-          <Text style={styles.errorText}>Eksik kayıt! Uzun basarak düzenleyin veya izinli işaretleyin.</Text>
+          <View style={styles.errorContainer}>
+            <Feather name="info" size={14} color={Colors.error} />
+            <Text style={styles.errorText}>Eksik kayıt! Düzenlemek için uzun basın.</Text>
+          </View>
         ) : null}
       </Pressable>
     );
@@ -121,7 +133,13 @@ export default function HistoryScreen() {
         keyExtractor={item => String(item.id)}
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
-        ListEmptyComponent={<Text style={styles.emptyText}>Henüz kayıt yok.</Text>}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={{alignItems: 'center', marginTop: 50}}>
+            <Feather name="inbox" size={48} color={Colors.border} />
+            <Text style={styles.emptyText}>Henüz geçmiş kaydınız bulunmuyor.</Text>
+          </View>
+        }
       />
     </View>
   );
@@ -134,22 +152,38 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
+    paddingTop: 12,
   },
   card: {
     padding: 16,
     marginBottom: 12,
-    borderWidth: 1,
     borderRadius: 16,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+    flexDirection: 'column',
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 10,
+  },
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+    backgroundColor: 'rgba(79, 70, 229, 0.1)',
   },
   dateText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: Colors.text,
   },
   leaveBadge: {
@@ -158,37 +192,57 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontSize: 10,
+    fontWeight: '800',
     overflow: 'hidden',
   },
   timeContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    marginLeft: 46,
+  },
+  divider: {
+    width: 1,
+    height: 16,
+    backgroundColor: Colors.border,
+    marginHorizontal: 16,
   },
   timeBox: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
   timeLabel: {
     fontSize: 12,
     color: Colors.lightText,
-    marginBottom: 4,
+    marginRight: 6,
+    fontWeight: '500',
   },
   timeValue: {
-    fontSize: 22,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '700',
     color: Colors.text,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    padding: 8,
+    borderRadius: 8,
+    marginTop: 10,
+    marginLeft: 46,
   },
   errorText: {
     color: Colors.error,
     fontSize: 12,
-    marginTop: 12,
-    textAlign: 'center',
+    marginLeft: 6,
+    fontWeight: '600',
   },
   emptyText: {
     textAlign: 'center',
     color: Colors.lightText,
-    marginTop: 32,
-    fontSize: 16,
+    marginTop: 16,
+    fontSize: 15,
+    fontWeight: '500',
   },
 });

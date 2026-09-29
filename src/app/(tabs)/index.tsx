@@ -16,48 +16,55 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { verifyWorkWifi } from '../../utils/wifiAuth';
 import Constants from 'expo-constants';
 import * as Haptics from 'expo-haptics';
-import { Audio } from 'expo-av';
-
-const playSuccessFeedback = async () => {
-  try {
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    await Audio.setAudioModeAsync({
-      playsInSilentModeIOS: false,
-    });
-    const { sound } = await Audio.Sound.createAsync(
-      require('../../../assets/sounds/success.mp3')
-    );
-    await sound.playAsync();
-    sound.setOnPlaybackStatusUpdate((status) => {
-      if ('didJustFinish' in status && status.didJustFinish) {
-        sound.unloadAsync();
-      }
-    });
-  } catch (err) {
-    console.log('Feedback err:', err);
-  }
-};
+import { useAudioPlayer } from 'expo-audio';
+// audio handling moved inside HoldButton
 
 const HoldButton = ({ type, onPunch, isLoading }: { type: 'in' | 'out', onPunch: () => void, isLoading: boolean }) => {
   const [fillValue] = useState(new Animated.Value(0));
+  const [scaleValue] = useState(new Animated.Value(1));
+  const player = useAudioPlayer(require('../../../assets/sounds/success.mp3'));
 
   const handlePressIn = () => {
     if (isLoading) return;
-    Animated.timing(fillValue, {
-      toValue: 1,
-      duration: 800, // 800ms hold required
-      useNativeDriver: false,
-    }).start(({ finished }) => {
-      if (finished) onPunch();
+    Animated.parallel([
+      Animated.timing(fillValue, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: false,
+      }),
+      Animated.spring(scaleValue, {
+        toValue: 0.95,
+        useNativeDriver: true,
+      })
+    ]).start(async ({ finished }) => {
+      if (finished) {
+        try {
+          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+          const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+          const isMuted = await AsyncStorage.getItem('isMuted');
+          if (isMuted !== 'true') {
+            player.seekTo(0);
+            player.play();
+          }
+        } catch(e) {}
+        onPunch();
+      }
     });
   };
 
   const handlePressOut = () => {
-    Animated.timing(fillValue, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
+    Animated.parallel([
+      Animated.timing(fillValue, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: false,
+      }),
+      Animated.spring(scaleValue, {
+        toValue: 1,
+        useNativeDriver: true,
+        friction: 4,
+      })
+    ]).start();
   };
 
   const widthInterpolation = fillValue.interpolate({
@@ -65,33 +72,61 @@ const HoldButton = ({ type, onPunch, isLoading }: { type: 'in' | 'out', onPunch:
     outputRange: ['0%', '100%'],
   });
 
+  const isDark = false; // We can use Colors to check theme if needed, but let's stick to vibrant
+
   return (
-    <Pressable 
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      style={styles.holdContainer}
-    >
-      <View style={styles.holdBackground} />
-      <Animated.View 
+    <Animated.View style={{ transform: [{ scale: scaleValue }], width: '100%' }}>
+      <Pressable 
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         style={[
-          styles.holdFill, 
+          styles.holdContainer, 
           { 
-            backgroundColor: type === 'in' ? 'rgba(79, 70, 229, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-            width: widthInterpolation 
+            borderColor: type === 'in' ? '#4F46E5' : '#EF4444',
+            backgroundColor: type === 'in' ? 'rgba(79, 70, 229, 0.05)' : 'rgba(239, 68, 68, 0.05)'
           }
-        ]} 
-      />
-      <View style={styles.holdContent}>
-        {isLoading ? (
-          <ActivityIndicator color={type === 'in' ? '#4F46E5' : '#EF4444'} />
-        ) : (
-          <Feather name={type === 'in' ? 'log-in' : 'log-out'} size={24} color={type === 'in' ? '#4F46E5' : '#EF4444'} />
-        )}
-        <Text style={[styles.holdText, { color: type === 'in' ? '#4F46E5' : '#EF4444' }]}>
-          {isLoading ? 'İşleniyor...' : (type === 'in' ? 'Giriş İçin Basılı Tut' : 'Çıkış İçin Basılı Tut')}
-        </Text>
-      </View>
-    </Pressable>
+        ]}
+      >
+        <Animated.View 
+          style={[
+            styles.holdFill, 
+            { width: widthInterpolation }
+          ]} 
+        >
+          <LinearGradient
+            colors={type === 'in' ? ['rgba(79, 70, 229, 0.3)', 'rgba(99, 102, 241, 0.3)'] : ['rgba(239, 68, 68, 0.3)', 'rgba(248, 113, 113, 0.3)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
+
+        <View style={styles.holdContent}>
+          <View style={[
+            {
+              width: 52,
+              height: 52,
+              borderRadius: 26,
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginRight: 12,
+            },
+            {
+              backgroundColor: type === 'in' ? 'rgba(79, 70, 229, 0.1)' : 'rgba(239, 68, 68, 0.1)' 
+            }
+          ]}>
+            {isLoading ? (
+              <ActivityIndicator color={type === 'in' ? '#4F46E5' : '#EF4444'} />
+            ) : (
+              <Feather name={type === 'in' ? 'log-in' : 'log-out'} size={26} color={type === 'in' ? '#4F46E5' : '#EF4444'} />
+            )}
+          </View>
+          <Text style={[styles.holdText, { color: type === 'in' ? '#4F46E5' : '#EF4444' }]}>
+            {isLoading ? 'İşleniyor...' : (type === 'in' ? 'Giriş İçin Basılı Tut' : 'Çıkış İçin Basılı Tut')}
+          </Text>
+        </View>
+      </Pressable>
+    </Animated.View>
   );
 };
 
@@ -145,6 +180,33 @@ export default function HomeScreen() {
   const [newRecordOutTime, setNewRecordOutTime] = useState('');
   const [newRecordNote, setNewRecordNote] = useState('');
   const [streakCount, setStreakCount] = useState(0);
+
+  const [isNameModalVisible, setIsNameModalVisible] = useState(false);
+  const [firstNameInput, setFirstNameInput] = useState('');
+  const [lastNameInput, setLastNameInput] = useState('');
+
+  const checkNameRequirement = async () => {
+    try {
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const fName = await AsyncStorage.getItem('firstName');
+      const lName = await AsyncStorage.getItem('lastName');
+      if (!fName || !lName) {
+        setIsNameModalVisible(true);
+      }
+    } catch (e) {}
+  };
+
+  const saveName = async () => {
+    if (!firstNameInput.trim() || !lastNameInput.trim()) {
+      Alert.alert('Hata', 'Lütfen adınızı ve soyadınızı eksiksiz girin.');
+      return;
+    }
+    const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+    await AsyncStorage.setItem('firstName', firstNameInput.trim());
+    await AsyncStorage.setItem('lastName', lastNameInput.trim());
+    setIsNameModalVisible(false);
+    Alert.alert('Başarılı', 'Bilgileriniz kaydedildi. Bu bilgiler raporlarınızda kullanılacaktır.');
+  };
 
   const openEditModal = (record: WorkRecord) => {
     if (record.is_leave_day) {
@@ -221,6 +283,7 @@ export default function HomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      checkNameRequirement();
       checkCurrentState();
       loadWeeklyRecords();
       loadSavedAddress();
@@ -242,6 +305,32 @@ export default function HomeScreen() {
         runFullSync().then(() => {
           loadWeeklyRecords();
         }).catch(e => console.log('Sync err:', e));
+        
+        // Check for end of month backup
+        try {
+          const now = new Date();
+          const currentMonthKey = `${now.getFullYear()}-${now.getMonth()}`;
+          const lastBackupMonth = await AsyncStorage.getItem('lastBackupMonth');
+          
+          if (lastBackupMonth && lastBackupMonth !== currentMonthKey) {
+            Alert.alert(
+              'Aylık Rapor Hazır!',
+              'Geçtiğimiz ayın puantaj kayıtlarını Excel olarak dışa aktarmak veya mail atmak ister misiniz?',
+              [
+                { text: 'Daha Sonra', style: 'cancel', onPress: () => AsyncStorage.setItem('lastBackupMonth', currentMonthKey) },
+                { text: 'Evet, Raporlara Git', onPress: () => {
+                  AsyncStorage.setItem('lastBackupMonth', currentMonthKey);
+                  router.push('/report');
+                }}
+              ]
+            );
+          } else if (!lastBackupMonth) {
+            // First time setting it up
+            await AsyncStorage.setItem('lastBackupMonth', currentMonthKey);
+          }
+        } catch (e) {
+          console.log('Backup check err:', e);
+        }
         
       })();
     }, [])
@@ -464,7 +553,7 @@ export default function HomeScreen() {
                     const result = await recordPunch(currentPunchType, 'manual');
                     if (!result.success) Alert.alert('Hata', result.message);
                     else {
-                      await playSuccessFeedback();
+              // Haptics handled by button
                       await stopGeofencing();
                       checkCurrentState();
                       loadWeeklyRecords();
@@ -483,7 +572,7 @@ export default function HomeScreen() {
       if (!result.success) {
         Alert.alert('Hata', result.message || 'Bilinmeyen bir hata oluştu.');
       } else {
-        await playSuccessFeedback();
+// Haptics handled by button
         if (currentPunchType === 'in') await startGeofencing();
         else await stopGeofencing();
         
@@ -812,6 +901,41 @@ export default function HomeScreen() {
                   <Text style={styles.editSaveText}>Kaydet</Text>
                 </Pressable>
               </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {isNameModalVisible && (
+        <Modal visible={true} transparent={true} animationType="fade">
+          <View style={[styles.editModalContainer, { backgroundColor: 'rgba(0,0,0,0.8)' }]}>
+            <View style={[styles.editModalContent, { padding: 30 }]}>
+              <Text style={[styles.editModalTitle, { fontSize: 24, textAlign: 'center', marginBottom: 12 }]}>Hoş Geldiniz! 👋</Text>
+              <Text style={{ textAlign: 'center', color: Colors.lightText, marginBottom: 24, lineHeight: 22 }}>
+                Raporlarınızı (Excel/PDF) oluşturabilmemiz için lütfen adınızı ve soyadınızı girin. Bu bilgiler sadece cihazınızda saklanacaktır.
+              </Text>
+              
+              <Text style={styles.editLabel}>Adınız</Text>
+              <TextInput
+                style={styles.editInput}
+                value={firstNameInput}
+                onChangeText={setFirstNameInput}
+                placeholder="Örn: Ahmet"
+                placeholderTextColor="#94A3B8"
+              />
+              
+              <Text style={styles.editLabel}>Soyadınız</Text>
+              <TextInput
+                style={styles.editInput}
+                value={lastNameInput}
+                onChangeText={setLastNameInput}
+                placeholder="Örn: Yılmaz"
+                placeholderTextColor="#94A3B8"
+              />
+
+              <Pressable style={[styles.editSaveBtn, { width: '100%', marginTop: 12 }]} onPress={saveName}>
+                <Text style={styles.editSaveText}>Kaydet ve Başla</Text>
+              </Pressable>
             </View>
           </View>
         </Modal>
