@@ -14,6 +14,7 @@ import * as TaskManager from 'expo-task-manager';
 import { GEOFENCE_TASK_NAME } from '../../tasks/geofenceTask';
 import { LinearGradient } from 'expo-linear-gradient';
 import { verifyWorkWifi } from '../../utils/wifiAuth';
+import Constants from 'expo-constants';
 const HoldButton = ({ type, onPunch, isLoading }: { type: 'in' | 'out', onPunch: () => void, isLoading: boolean }) => {
   const [fillValue] = useState(new Animated.Value(0));
 
@@ -790,7 +791,7 @@ export default function HomeScreen() {
       )}
 
       <Text style={{ textAlign: 'center', color: '#9CA3AF', fontSize: 12, marginTop: 40, marginBottom: 20 }}>
-        v1.8.0
+        v{Constants.expoConfig?.version || '1.9.4'}
       </Text>
     </ScrollView>
     </View>
