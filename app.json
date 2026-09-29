@@ -3,7 +3,7 @@
     "name": "puantaj",
     "slug": "puantaj",
     "scheme": "puantaj",
-    "version": "1.9.7",
+    "version": "1.9.8",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",

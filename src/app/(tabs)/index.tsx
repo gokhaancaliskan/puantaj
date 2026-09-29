@@ -15,6 +15,29 @@ import { GEOFENCE_TASK_NAME } from '../../tasks/geofenceTask';
 import { LinearGradient } from 'expo-linear-gradient';
 import { verifyWorkWifi } from '../../utils/wifiAuth';
 import Constants from 'expo-constants';
+import * as Haptics from 'expo-haptics';
+import { Audio } from 'expo-av';
+
+const playSuccessFeedback = async () => {
+  try {
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    await Audio.setAudioModeAsync({
+      playsInSilentModeIOS: false,
+    });
+    const { sound } = await Audio.Sound.createAsync(
+      require('../../../assets/sounds/success.mp3')
+    );
+    await sound.playAsync();
+    sound.setOnPlaybackStatusUpdate((status) => {
+      if ('didJustFinish' in status && status.didJustFinish) {
+        sound.unloadAsync();
+      }
+    });
+  } catch (err) {
+    console.log('Feedback err:', err);
+  }
+};
+
 const HoldButton = ({ type, onPunch, isLoading }: { type: 'in' | 'out', onPunch: () => void, isLoading: boolean }) => {
   const [fillValue] = useState(new Animated.Value(0));
 
@@ -441,6 +464,7 @@ export default function HomeScreen() {
                     const result = await recordPunch(currentPunchType, 'manual');
                     if (!result.success) Alert.alert('Hata', result.message);
                     else {
+                      await playSuccessFeedback();
                       await stopGeofencing();
                       checkCurrentState();
                       loadWeeklyRecords();
@@ -459,6 +483,7 @@ export default function HomeScreen() {
       if (!result.success) {
         Alert.alert('Hata', result.message || 'Bilinmeyen bir hata oluştu.');
       } else {
+        await playSuccessFeedback();
         if (currentPunchType === 'in') await startGeofencing();
         else await stopGeofencing();
         
