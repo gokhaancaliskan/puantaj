@@ -98,3 +98,7 @@ v1.9.4
 v1.9.5
 - İş yeri konumu ayarlama (`setup-location.tsx`) ekranına adres/isim ile arama özelliği eklendi (Google Geocode API).
 - Kullanıcıların sadece bulundukları konumu değil, harita üzerinde istedikleri yere dokunarak (veya sürükleyerek) o noktayı "iş yeri" olarak ayarlayabilmesi özelliği (Draggable Marker) eklendi.
+
+v1.9.6
+- Android kurulum (APK) esnasında görünen uygulama sürümünün `1.8.0`'da takılı kalması düzeltildi. Artık Android sürümü (`versionCode` ve `versionName`) otomatik olarak package.json üzerinden dinamik okunarak güncelleniyor.
+- Uygulama içinde (Profil sayfasından) tema değiştirildiğinde stillerin bozulmasını engellemek için geçici olarak kullanıcıya "Uygulamayı yeniden başlatın" uyarısı eklendi. (Stillerin sabit hafızada kalmasından kaynaklı bozulma önlendi).

@@ -1,6 +1,6 @@
 {
   "name": "puantajim",
-  "version": "1.8.0",
+  "version": "1.9.5",
   "main": "index.js",
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",

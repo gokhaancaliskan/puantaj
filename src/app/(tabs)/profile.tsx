@@ -109,6 +109,13 @@ export default function ProfileScreen() {
     setThemeMode(next);
     await AsyncStorage.setItem('appTheme', next);
     Appearance.setColorScheme(next === 'system' ? 'system' as any : next);
+    
+    Alert.alert(
+      t('theme'), 
+      language === 'tr' 
+        ? 'Temanın tüm sayfalarda düzgün uygulanması için uygulamayı kapatıp yeniden açmanız gerekmektedir.' 
+        : 'Please restart the application for the theme to be applied correctly across all screens.'
+    );
   };
 
   const saveWorkingHours = async () => {
