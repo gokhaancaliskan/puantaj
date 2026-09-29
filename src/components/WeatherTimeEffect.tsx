@@ -1,13 +1,34 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, Dimensions, Text } from 'react-native';
 import * as Location from 'expo-location';
-import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const { width, height } = Dimensions.get('window');
+const weatherTranslations: Record<number, string> = {
+  0: 'Açık / Güneşli',
+  1: 'Çoğunlukla Açık',
+  2: 'Parçalı Bulutlu',
+  3: 'Çok Bulutlu',
+  45: 'Sisli',
+  48: 'Kırağılı Sis',
+  51: 'Hafif Çisenti',
+  53: 'Çisenti',
+  55: 'Yoğun Çisenti',
+  61: 'Hafif Yağmurlu',
+  63: 'Yağmurlu',
+  65: 'Şiddetli Yağmurlu',
+  71: 'Hafif Kar Yağışlı',
+  73: 'Kar Yağışlı',
+  75: 'Yoğun Kar Yağışlı',
+  80: 'Hafif Sağanak Yağış',
+  81: 'Sağanak Yağış',
+  82: 'Şiddetli Sağanak Yağış',
+  95: 'Gök Gürültülü Fırtına',
+  96: 'Hafif Dolulu Fırtına',
+  99: 'Şiddetli Dolulu Fırtına',
+};
 
 export default function WeatherTimeEffect() {
-  const [weatherData, setWeatherData] = useState<{ isDay: number; weatherCode: number; timeHour: number } | null>(null);
+  const [weatherData, setWeatherData] = useState<{ isDay: number; weatherCode: number; timeHour: number; temp: number } | null>(null);
 
   useEffect(() => {
     fetchWeather();
@@ -16,8 +37,7 @@ export default function WeatherTimeEffect() {
   async function fetchWeather() {
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
-      
-      let lat = 41.0082; // Default to Istanbul
+      let lat = 41.0082;
       let lon = 28.9784;
 
       if (status === 'granted') {
@@ -26,109 +46,93 @@ export default function WeatherTimeEffect() {
         lon = location.coords.longitude;
       }
 
-      const response = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=is_day,weather_code`
-      );
-      const data = await response.json();
-      
-      if (data && data.current) {
-        setWeatherData({
-          isDay: data.current.is_day,
-          weatherCode: data.current.weather_code,
-          timeHour: new Date().getHours()
-        });
-      }
-    } catch (error) {
-      console.log('Weather fetch error:', error);
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,is_day,weather_code&timezone=auto`);
+      const data = await res.json();
+      const current = data.current;
+      setWeatherData({
+        isDay: current.is_day,
+        weatherCode: current.weather_code,
+        timeHour: new Date().getHours(),
+        temp: current.temperature_2m,
+      });
+    } catch (e) {
+      console.log('Weather fetch err', e);
     }
-  };
+  }
 
   if (!weatherData) return null;
 
-  const isDay = weatherData.isDay === 1;
-  const hour = weatherData.timeHour;
-  const isSunset = hour >= 17 && hour <= 19;
-  const isSunrise = hour >= 5 && hour <= 7;
-  
-  const isRaining = [51, 53, 55, 61, 63, 65, 80, 81, 82].includes(weatherData.weatherCode);
-  const isSnowing = [71, 73, 75, 77, 85, 86].includes(weatherData.weatherCode);
+  const { isDay, weatherCode, temp } = weatherData;
+  const isRaining = [51, 53, 55, 61, 63, 65, 80, 81, 82].includes(weatherCode);
+  const isSnowing = [71, 73, 75, 77, 85, 86].includes(weatherCode);
+  const isCloudy = [2, 3, 45, 48].includes(weatherCode);
 
-  let colors = ['#0B0F19', '#161E2E']; // Default Night
-  if (isSunset) {
-    colors = ['#4338CA', '#DB2777', '#F59E0B'];
-  } else if (isSunrise) {
-    colors = ['#1E3A8A', '#F472B6', '#FDE047'];
-  } else if (isDay) {
-    colors = ['#38BDF8', '#0EA5E9', '#2563EB'];
-  }
-
-  if (isRaining) {
-    colors = isDay ? ['#475569', '#334155', '#1E293B'] : ['#0F172A', '#020617'];
-  } else if (isSnowing) {
-    colors = isDay ? ['#94A3B8', '#CBD5E1', '#F1F5F9'] : ['#1E293B', '#334155'];
-  }
+  let colors = isDay ? ['#38BDF8', '#0284C7'] : ['#1E1B4B', '#312E81'];
+  if (isRaining) colors = isDay ? ['#475569', '#1E293B'] : ['#0F172A', '#020617'];
+  else if (isSnowing) colors = isDay ? ['#94A3B8', '#F1F5F9'] : ['#1E293B', '#334155'];
 
   return (
-    <View style={styles.container} pointerEvents="none">
-      <LinearGradient
-        colors={colors as [string, string, ...string[]]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-      />
-      
-      <View style={[styles.celestialBody, isDay ? styles.sunPos : styles.moonPos]}>
-        <Feather
-          name={isSunset ? 'sunset' : isSunrise ? 'sunrise' : isDay ? 'sun' : 'moon'}
-          size={180}
-          color="#FFF"
-          style={{ opacity: 0.15 }}
-        />
-      </View>
-
-      {isRaining && (
-        <View style={styles.weatherOverlay}>
-          <Feather name="cloud-rain" size={240} color="#FFF" style={{ opacity: 0.1 }} />
+    <View style={styles.cardContainer}>
+      <LinearGradient colors={colors as [string, string]} style={styles.gradientCard}>
+        <View style={styles.cardContent}>
+          <View style={styles.infoCol}>
+            <Text style={styles.tempText}>{Math.round(temp)}°C</Text>
+            <Text style={styles.descText}>{weatherTranslations[weatherCode] || 'Bilinmiyor'}</Text>
+          </View>
+          <View style={styles.emojiCol}>
+            {isRaining && <Text style={styles.emojiText}>🌧️</Text>}
+            {isSnowing && <Text style={styles.emojiText}>❄️</Text>}
+            {isCloudy && !isRaining && !isSnowing && <Text style={styles.emojiText}>☁️</Text>}
+            {!isRaining && !isSnowing && !isCloudy && isDay ? <Text style={styles.emojiText}>☀️</Text> : null}
+            {!isRaining && !isSnowing && !isCloudy && !isDay ? <Text style={styles.emojiText}>🌙</Text> : null}
+          </View>
         </View>
-      )}
-      
-      {isSnowing && (
-        <View style={styles.weatherOverlay}>
-          <Feather name="cloud-snow" size={240} color="#FFF" style={{ opacity: 0.1 }} />
-        </View>
-      )}
+      </LinearGradient>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 0, 
+  cardContainer: {
+    marginHorizontal: 24,
+    marginTop: 48, // Safe area push
+    marginBottom: -10, // Pull scroll view slightly up
+    borderRadius: 20,
     overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    zIndex: 10,
   },
-  celestialBody: {
-    position: 'absolute',
+  gradientCard: {
+    padding: 20,
   },
-  sunPos: {
-    top: 40,
-    right: -40,
-  },
-  moonPos: {
-    top: 60,
-    left: -40,
-  },
-  weatherOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
+  cardContent: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
+  infoCol: {
+    flex: 1,
+  },
+  tempText: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#FFF',
+  },
+  descText: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.9)',
+    fontWeight: '500',
+    marginTop: 4,
+  },
+  emojiCol: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  emojiText: {
+    fontSize: 48,
+  }
 });

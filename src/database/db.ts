@@ -1,7 +1,12 @@
 import * as SQLite from 'expo-sqlite';
 
+let dbInstance: SQLite.SQLiteDatabase | null = null;
+
 export const getDb = () => {
-  return SQLite.openDatabaseSync('puantajim.db');
+  if (!dbInstance) {
+    dbInstance = SQLite.openDatabaseSync('puantajim.db');
+  }
+  return dbInstance;
 };
 
 export const initDb = async () => {
@@ -18,7 +23,9 @@ export const initDb = async () => {
       is_leave_day INTEGER DEFAULT 0,
       source TEXT CHECK(source IN ('manual', 'widget', 'geofence')) NOT NULL,
       last_edited_at INTEGER NOT NULL,
-      synced_at INTEGER
+      synced_at INTEGER,
+      note TEXT,
+      attachment_uri TEXT
     );
   `);
 
@@ -28,4 +35,12 @@ export const initDb = async () => {
   } catch (e) {
     // Column might already exist
   }
+  
+  try {
+    await db.execAsync(`ALTER TABLE work_records ADD COLUMN note TEXT;`);
+  } catch (e) {}
+
+  try {
+    await db.execAsync(`ALTER TABLE work_records ADD COLUMN attachment_uri TEXT;`);
+  } catch (e) {}
 };

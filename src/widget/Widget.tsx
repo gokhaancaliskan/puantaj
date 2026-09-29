@@ -4,25 +4,26 @@ import { FlexWidget, TextWidget } from 'react-native-android-widget';
 interface PunchWidgetProps {
   punchType?: 'in' | 'out';
   lastPunchTime?: string | null;
+  elapsedStr?: string | null;
 }
 
-export function PunchWidget({ punchType = 'in', lastPunchTime = null }: PunchWidgetProps) {
-  const isCheckedIn = punchType === 'out'; // if next punch is 'out', currently checked in
-  const actionColor = isCheckedIn ? '#EF4444' : '#3B82F6'; // red = checked in (exit), blue = checked out (enter)
+export function PunchWidget({ punchType = 'in', lastPunchTime = null, elapsedStr = null }: PunchWidgetProps) {
+  const isCheckedIn = punchType === 'out';
+  // Use app's brand colors
+  const actionColor = isCheckedIn ? '#EF4444' : '#2563EB'; // Red for Exit, Primary Blue for Enter
   const actionText = isCheckedIn ? 'Çıkış Yap' : 'Giriş Yap';
   const statusText = isCheckedIn ? '● Aktif Mesai' : '○ Mesai Dışı';
-  const statusColor = isCheckedIn ? '#10B981' : '#94A3B8';
+  const statusColor = isCheckedIn ? '#10B981' : '#64748B';
 
   return (
     <FlexWidget
-      clickAction="PUNCH_ACTION"
       style={{
         height: 'match_parent',
         width: 'match_parent',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        backgroundColor: '#0F172A',
-        borderRadius: 20,
+        backgroundColor: '#FFFFFF', // Modern light card
+        borderRadius: 24,
         padding: 16,
       }}
     >
@@ -32,45 +33,66 @@ export function PunchWidget({ punchType = 'in', lastPunchTime = null }: PunchWid
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: 8,
+          marginBottom: 4,
         }}
       >
         <TextWidget
           text="Puantajım"
           style={{
-            fontSize: 14,
+            fontSize: 15,
             fontFamily: 'System',
-            color: '#94A3B8',
+            color: '#334155',
             fontWeight: 'bold',
           }}
         />
+        <FlexWidget
+          style={{
+            backgroundColor: isCheckedIn ? '#D1FAE5' : '#F1F5F9',
+            paddingHorizontal: 8,
+            paddingVertical: 4,
+            borderRadius: 12,
+          }}
+        >
+          <TextWidget
+            text={statusText}
+            style={{
+              fontSize: 12,
+              color: statusColor,
+              fontWeight: 'bold',
+            }}
+          />
+        </FlexWidget>
+      </FlexWidget>
+
+      {/* Last punch time */}
+      <FlexWidget style={{ flexDirection: 'column', marginBottom: 12 }}>
         <TextWidget
-          text={statusText}
+          text={elapsedStr ? elapsedStr : "Son İşlem:"}
           style={{
             fontSize: 12,
-            color: statusColor,
+            color: elapsedStr ? '#2563EB' : '#94A3B8',
+            fontFamily: 'System',
+            fontWeight: elapsedStr ? 'bold' : 'normal',
+            marginBottom: 2,
+          }}
+        />
+        <TextWidget
+          text={lastPunchTime ? lastPunchTime : 'Henüz kayıt yok'}
+          style={{
+            fontSize: 14,
+            color: '#1E293B',
+            fontFamily: 'System',
             fontWeight: 'bold',
           }}
         />
       </FlexWidget>
-
-      {/* Last punch time */}
-      <TextWidget
-        text={lastPunchTime ? lastPunchTime : 'Henüz kayıt yok'}
-        style={{
-          fontSize: 13,
-          color: '#F8FAFC',
-          fontFamily: 'System',
-          marginBottom: 12,
-        }}
-      />
 
       {/* Action Button */}
       <FlexWidget
         clickAction="PUNCH_ACTION"
         style={{
           backgroundColor: actionColor,
-          borderRadius: 14,
+          borderRadius: 16,
           paddingVertical: 14,
           paddingHorizontal: 16,
           alignItems: 'center',
@@ -91,17 +113,25 @@ export function PunchWidget({ punchType = 'in', lastPunchTime = null }: PunchWid
   );
 }
 
-export function DetailWidget() {
+interface DetailWidgetProps {
+  punchType?: 'in' | 'out';
+  elapsedStr?: string | null;
+}
+
+export function DetailWidget({ punchType = 'in', elapsedStr = null }: DetailWidgetProps) {
+  const isCheckedIn = punchType === 'out';
+  const actionColor = isCheckedIn ? '#EF4444' : '#2563EB';
+  const actionText = isCheckedIn ? 'Çıkış Yap' : 'Giriş Yap';
+
   return (
     <FlexWidget
-      clickAction="OPEN_APP"
       style={{
         height: 'match_parent',
         width: 'match_parent',
         justifyContent: 'space-between',
         alignItems: 'center',
         flexDirection: 'row',
-        backgroundColor: '#1E293B',
+        backgroundColor: '#FFFFFF',
         borderRadius: 24,
         paddingHorizontal: 20,
       }}
@@ -109,26 +139,26 @@ export function DetailWidget() {
       <FlexWidget style={{ flexDirection: 'column', justifyContent: 'center' }}>
         <TextWidget
           text="Puantajım"
-          style={{ fontSize: 20, color: '#FFFFFF', fontWeight: 'bold' }}
+          style={{ fontSize: 18, color: '#1E293B', fontWeight: 'bold' }}
         />
         <TextWidget
-          text="Hızlı işlem yapın"
-          style={{ fontSize: 14, color: '#94A3B8', marginTop: 4 }}
+          text={elapsedStr ? elapsedStr : "İşlem bekliyor"}
+          style={{ fontSize: 13, color: elapsedStr ? '#2563EB' : '#64748B', marginTop: 2, fontWeight: elapsedStr ? 'bold' : 'normal' }}
         />
       </FlexWidget>
 
       <FlexWidget
         clickAction="PUNCH_ACTION"
         style={{
-          backgroundColor: '#3B82F6',
+          backgroundColor: actionColor,
           borderRadius: 16,
-          paddingHorizontal: 20,
-          paddingVertical: 14,
+          paddingHorizontal: 16,
+          paddingVertical: 12,
         }}
       >
         <TextWidget
-          text="Giriş/Çıkış"
-          style={{ color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' }}
+          text={actionText}
+          style={{ color: '#FFFFFF', fontSize: 15, fontWeight: 'bold' }}
         />
       </FlexWidget>
     </FlexWidget>

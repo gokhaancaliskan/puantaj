@@ -1,0 +1,68 @@
+v1.0.0
+- İlk çıkış
+- Kaydırma (Swipe) butonu eklendi
+- Giriş / Çıkış kayıtları veritabanına yazıldı
+
+v1.1.0
+- Kaydırma butonu Bas-Bırak (Hold) butonuna dönüştürüldü (daha stabil)
+- Hava durumu efekti güncellendi (tam ekran yerine üstte güzel bir kart haline getirildi)
+- "İzinliyim/Hastayım" mazeret butonu eklendi (resmi tatil ve kişisel mazeret işaretleme)
+- Raporlama sayfasındaki CSV çıktısında ID yerine çalışan adı (email) eklendi
+- Bildirimlerden aksiyon (Giriş Yap / Çıkış Yap) dinleme eklendi
+- Mesai hesaplamaları daha detaylı gösterildi (x1.5, x2)
+- Ana sayfaya Versiyon numarası eklendi
+
+v1.2.0
+- Geçmiş kayıtları düzenleme ve manuel yeni kayıt ekleme özelliği getirildi
+- Hava durumu kartı ScrollView içerisine alınarak tasarımın üst üste binme hatası düzeltildi
+- Açık Tema (Light Mode) ve Koyu Tema (Dark Mode) desteği eklendi
+- Typescript ve derleme hataları giderilerek sistem çok daha stabil hale getirildi
+
+v1.2.1
+- Yükleme (Splash) ekranındaki ve sistem seviyesindeki versiyon numaraları `package.json` ve `app.json` üzerinden v1.2.0/v1.2.1'e güncellendi.
+- "Mesai Saatleri" ayarlarına detaylı "Giriş" ve "Çıkış" saatleri eklendi.
+- Bildirim sistemi (giriş yapmayı unuttun vs.) tamamen kullanıcının belirlediği bu dinamik saatlere (örn: 08:30 ve 18:00) entegre edildi. Bildirimler ayarlanan saatten tam 10 dakika önce gelecek şekilde kurgulandı.
+
+v1.4.0
+- Widget ve Puantaj Çıkış Mantığı Düzenlemesi (Geriye dönük giriş atıldığında çıkış butonunun otomatik düzelmesi).
+- Çevrimdışı Mod (Supabase Sync) onayı ve kontrolü sağlandı.
+- Gelişmiş rehber ve sistem temasını baz alan tercih entegrasyonu tamamlandı.
+
+v1.5.0
+- "Gizli" Yönetim (Admin) paneli eklendi (Profil fotoğrafına 7 kere basarak girilir).
+- Karekod (QR) ve NFC ile giriş yapma altyapısı kuruldu (şimdilik yönetim panelinden gizlendi/kapatıldı).
+- Raporlar ekranı yeniden tasarlandı; Bugün, Bu Hafta ve Bu Ay olarak çok daha sade ve anlaşılır sekmelere bölündü.
+- Uygulama içi detaylı görsel "Uygulama Rehberi" (Onboarding) Profil sayfasına eklendi.
+- Giriş yapmayı unutma veya eksik giriş yapma gibi durumlarda, manuel giriş kaydı yapıldığında, çıkış butonunun anında güncellenmesi ve uyarı vermesi sağlandı.
+- Genel uygulama özellikleri ve kullanım senaryolarını anlatan UYGULAMA_REHBERI.md not defteri oluşturuldu.
+
+v1.6.0
+- Kayıtlara özel Not ekleme (Örn: "Trafik nedeniyle geciktim") özelliği eklendi.
+- Kesintisiz ve düzenli çalışma (Giriş/Çıkış) gösterenler için motive edici 🔥 Seri (Streak) göstergesi ana ekrana eklendi.
+- Veritabanı şeması (SQLite) güncellendi: İleride kullanılmak üzere fotoğraflı rapor/dosya eki (`attachment_uri`) altyapısı eklendi.
+- Uygulama güvenliği için Biyometrik (Parmak izi / Yüz tanıma) veya Şifreli (PIN) Kilit Ekranı (`_layout.tsx` üzerinde) altyapısı hazırlandı.
+
+v1.7.0
+- Uygulama güvenliği için Cihaz Şifresi/PIN (Biyometrik okuyucuya alternatif olarak) aktif edildi.
+- Arka plan Geofencing (Konum tabanlı bildirim) otomatik çıkış yapmak yerine, sadece etkileşimli bildirim ("Çıkış yapmayı unuttunuz mu?") gönderecek şekilde düzenlendi.
+- Opsiyonel Maaş / Kazanç hesaplama sistemi raporlara entegre edildi. Ayarlardan "Saatlik Ücret" girildiği takdirde Raporlar sekmesinde "Tahmini Kazanç" detaylı olarak gösterilmektedir.
+- Tatil ve hastalık gibi durumlarda kullanılacak fotoğraflı (kanıt) rapor ekleme sistemi (`report-upload.tsx`) altyapısı kuruldu. Mevcut UI şimdilik görünmez (gizli) olarak ayarlandı.
+- Çakışan manuel kayıtların raporlardaki toplam süreyi şişirmesini veya yanlış göstermesini engellemek adına rapor hesaplama yapısı ve UI'ı iyileştirildi.
+
+v1.7.1
+- Ana ekran Widget tasarımı modernize edildi (Uygulamanın açık kart tasarımıyla birebir uyumlu hale getirildi).
+- Uygulamayı ilk kez açanlar için sunulan "Uygulama Rehberi" (Onboarding) ekranı, dışarıdan ekran görüntüsü indirmeye gerek kalmadan, doğrudan cihazın içinde çizilen çok daha premium görünümlü "Telefon Çerçevesi (Mockup)" tasarımıyla güncellendi. Artık çok daha profesyonel ve şık görünüyor.
+
+v1.7.2
+- Widget'lara canlı "Çalışma Süresi (kaç dakikadır / saattir çalışılıyor)" sayacı eklendi.
+- Küçük ve büyük her iki widget da duruma göre ("Giriş Yap" / "Çıkış Yap") dinamik değişecek şekilde tasarlandı ve düğme işlevleri iyileştirildi. Artık statik "Giriş/Çıkış" yazmıyor, sadece yapılması gereken aksiyonu gösteriyor.
+
+v1.8.0
+- Gizli Yönetici (Admin) Paneli için ek güvenlik önlemi getirildi. Artık profil fotoğrafına 7 kez dokunulsa bile, yetkisiz erişimleri önlemek amacıyla bir Yönetici Şifresi soruluyor (Varsayılan şifre: 6224).
+- Raporlar sekmesine "PDF Olarak Dışa Aktar" butonu eklendi. Aylık ve haftalık veriler (Giriş/Çıkış Saatleri, Hak Edilen Farklar vb.) artık profesyonel bir PDF tablosu olarak cihazınıza kaydedilebiliyor.
+- **Google Asistan (Ok Google) Altyapısı Eklendi:** Uygulamaya Deep Link (Derin Bağlantı) desteği (`puantaj://action`) getirilerek sesli asistanlar veya cihaz kısayolları üzerinden uygulamaya dokunmadan işe giriş/çıkış yapılabilme özelliği eklendi.
+- **Resmi Tatiller Takvimi Entegrasyonu:** Resmi tatiller (1 Mayıs, 29 Ekim vb.) sisteme gömüldü. Genel Ayarlar kısmına "Resmi Tatillerde Bildirim Gönder / Gönderme" seçeneği eklendi.
+- **Güvenlik (Cihaz ID Eşleştirme):** Hesaplar artık giriş yapılan cihaza kilitleniyor. Başkasının telefonuyla kendi hesabınıza giriş yapıp asılsız (fake) puantaj kaydı oluşturulması engellendi. (Anti-Fraud Sistemi)
+- **Hızlı Giriş (Wi-Fi Doğrulaması):** Ayarlar sekmesine "İş Yeri Wi-Fi'ı Kaydet" butonu eklendi. Artık iş yerinizin ağına bağlı olduğunuzda, konumun bulunmasını veya GPS mesafesini beklemeden giriş/çıkış yapabileceksiniz.
+
+

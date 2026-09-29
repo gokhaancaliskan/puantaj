@@ -1,8 +1,8 @@
-import { View, Text, Pressable, StyleSheet, Alert, FlatList, Modal, SafeAreaView, ScrollView } from 'react-native';
-import { useEffect, useState, useCallback } from 'react';
+import { View, Text, Pressable, StyleSheet, Alert, FlatList, Modal, SafeAreaView, ScrollView, Animated, PanResponder, ActivityIndicator, TextInput } from 'react-native';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '../../constants/Colors';
-import { recordPunch, PunchType, WorkRecord } from '../../database/recordPunch';
+import { recordPunch, markAsLeaveDay, PunchType, WorkRecord, updateRecordTimes, insertManualRecord } from '../../database/recordPunch';
 import { getDb } from '../../database/db';
 import { runFullSync, syncToCloud } from '../../database/sync';
 import WeatherTimeEffect from '../../components/WeatherTimeEffect';
@@ -13,15 +13,187 @@ import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { GEOFENCE_TASK_NAME } from '../../tasks/geofenceTask';
 import { LinearGradient } from 'expo-linear-gradient';
+import { verifyWorkWifi } from '../../utils/wifiAuth';
+const HoldButton = ({ type, onPunch, isLoading }: { type: 'in' | 'out', onPunch: () => void, isLoading: boolean }) => {
+  const [fillValue] = useState(new Animated.Value(0));
+
+  const handlePressIn = () => {
+    if (isLoading) return;
+    Animated.timing(fillValue, {
+      toValue: 1,
+      duration: 800, // 800ms hold required
+      useNativeDriver: false,
+    }).start(({ finished }) => {
+      if (finished) onPunch();
+    });
+  };
+
+  const handlePressOut = () => {
+    Animated.timing(fillValue, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const widthInterpolation = fillValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0%', '100%'],
+  });
+
+  return (
+    <Pressable 
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={styles.holdContainer}
+    >
+      <View style={styles.holdBackground} />
+      <Animated.View 
+        style={[
+          styles.holdFill, 
+          { 
+            backgroundColor: type === 'in' ? 'rgba(79, 70, 229, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+            width: widthInterpolation 
+          }
+        ]} 
+      />
+      <View style={styles.holdContent}>
+        {isLoading ? (
+          <ActivityIndicator color={type === 'in' ? '#4F46E5' : '#EF4444'} />
+        ) : (
+          <Feather name={type === 'in' ? 'log-in' : 'log-out'} size={24} color={type === 'in' ? '#4F46E5' : '#EF4444'} />
+        )}
+        <Text style={[styles.holdText, { color: type === 'in' ? '#4F46E5' : '#EF4444' }]}>
+          {isLoading ? 'İşleniyor...' : (type === 'in' ? 'Giriş İçin Basılı Tut' : 'Çıkış İçin Basılı Tut')}
+        </Text>
+      </View>
+    </Pressable>
+  );
+};
 
 export default function HomeScreen() {
   const [currentPunchType, setCurrentPunchType] = useState<PunchType>('in');
   const [lastPunchTime, setLastPunchTime] = useState<string | null>(null);
+  const [isPunching, setIsPunching] = useState(false);
+  const [elapsedTime, setElapsedTime] = useState<string | null>(null);
+
   const [weeklyRecords, setWeeklyRecords] = useState<WorkRecord[]>([]);
+
+  // Live Timer Effect
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (currentPunchType === 'out') {
+      const todayRecord = weeklyRecords.find(r => {
+        const today = new Date().toLocaleDateString('tr-TR');
+        return r.date === today && r.check_in_timestamp && !r.check_out_timestamp;
+      });
+
+      if (todayRecord && todayRecord.check_in_timestamp) {
+        const updateTimer = () => {
+          const diffMs = Date.now() - todayRecord.check_in_timestamp!;
+          const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+          const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+          setElapsedTime(`${diffHrs} saat ${diffMins} dk`);
+        };
+        updateTimer();
+        interval = setInterval(updateTimer, 60000); // update every minute
+      } else {
+        setElapsedTime(null);
+      }
+    } else {
+      setElapsedTime(null);
+    }
+    return () => clearInterval(interval);
+  }, [currentPunchType, weeklyRecords]);
   const [workLocation, setWorkLocation] = useState<{lat: number, lng: number} | null>(null);
   const [workAddress, setWorkAddress] = useState<string | null>(null);
   const [isMapModalVisible, setIsMapModalVisible] = useState(false);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+
+  const [editingRecord, setEditingRecord] = useState<WorkRecord | null>(null);
+  const [editInTime, setEditInTime] = useState('');
+  const [editOutTime, setEditOutTime] = useState('');
+  const [editNote, setEditNote] = useState('');
+
+  const [isNewRecordModalVisible, setIsNewRecordModalVisible] = useState(false);
+  const [newRecordDate, setNewRecordDate] = useState('');
+  const [newRecordInTime, setNewRecordInTime] = useState('');
+  const [newRecordOutTime, setNewRecordOutTime] = useState('');
+  const [newRecordNote, setNewRecordNote] = useState('');
+  const [streakCount, setStreakCount] = useState(0);
+
+  const openEditModal = (record: WorkRecord) => {
+    if (record.is_leave_day) {
+      Alert.alert('Bilgi', 'İzinli günlerde saat düzenlemesi yapılamaz.');
+      return;
+    }
+    setEditingRecord(record);
+    const inD = record.check_in_timestamp ? new Date(record.check_in_timestamp) : null;
+    const outD = record.check_out_timestamp ? new Date(record.check_out_timestamp) : null;
+    setEditInTime(inD ? `${inD.getHours().toString().padStart(2, '0')}:${inD.getMinutes().toString().padStart(2, '0')}` : '');
+    setEditOutTime(outD ? `${outD.getHours().toString().padStart(2, '0')}:${outD.getMinutes().toString().padStart(2, '0')}` : '');
+    setEditNote(record.note || '');
+  };
+
+  const saveEditRecord = async () => {
+    if (!editingRecord) return;
+    try {
+      const parseTime = (timeStr: string, baseDateStr: string) => {
+        if (!timeStr.trim()) return null;
+        const [h, m] = timeStr.split(':');
+        if (h === undefined || m === undefined || isNaN(parseInt(h)) || isNaN(parseInt(m))) return null;
+        const [d, mo, y] = baseDateStr.split('.');
+        const date = new Date(parseInt(y), parseInt(mo) - 1, parseInt(d), parseInt(h), parseInt(m));
+        return date.getTime();
+      };
+      const inTs = parseTime(editInTime, editingRecord.date);
+      const outTs = parseTime(editOutTime, editingRecord.date);
+      const res = await updateRecordTimes(editingRecord.id, inTs, outTs, editNote);
+      if (res.success) {
+        setEditingRecord(null);
+        loadWeeklyRecords();
+        checkCurrentState();
+        Alert.alert('Başarılı', 'Kayıt güncellendi.');
+        syncToCloud().catch(e => console.log(e));
+      }
+    } catch (e) {
+      Alert.alert('Hata', 'Kayıt düzenlenirken hata oluştu. (Lütfen SS:DD formatında girin)');
+    }
+  };
+
+  const saveNewRecord = async () => {
+    try {
+      const parseTime = (timeStr: string, baseDateStr: string) => {
+        if (!timeStr.trim()) return null;
+        const [h, m] = timeStr.split(':');
+        if (h === undefined || m === undefined || isNaN(parseInt(h)) || isNaN(parseInt(m))) return null;
+        const [d, mo, y] = baseDateStr.split('.');
+        if (d === undefined || mo === undefined || y === undefined) return null;
+        const date = new Date(parseInt(y), parseInt(mo) - 1, parseInt(d), parseInt(h), parseInt(m));
+        return date.getTime();
+      };
+      const inTs = parseTime(newRecordInTime, newRecordDate);
+      const outTs = parseTime(newRecordOutTime, newRecordDate);
+      if (!newRecordDate.match(/^\d{2}\.\d{2}\.\d{4}$/)) {
+        Alert.alert('Hata', 'Tarih GG.AA.YYYY formatında olmalıdır.');
+        return;
+      }
+      const res = await insertManualRecord(newRecordDate, inTs, outTs, 'local_user', newRecordNote);
+      if (res.success) {
+        setIsNewRecordModalVisible(false);
+        setNewRecordDate('');
+        setNewRecordInTime('');
+        setNewRecordOutTime('');
+        setNewRecordNote('');
+        loadWeeklyRecords();
+        checkCurrentState();
+        Alert.alert('Başarılı', 'Yeni kayıt eklendi.');
+        syncToCloud().catch(e => console.log(e));
+      }
+    } catch (e) {
+      Alert.alert('Hata', 'Kayıt eklenirken hata oluştu.');
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -92,10 +264,17 @@ export default function HomeScreen() {
       const storedUserId = await AsyncStorage.getItem('userId');
       const userId = storedUserId || 'local_user';
 
-      const record = await db.getFirstAsync<any>(
-        `SELECT * FROM work_records WHERE user_id = ? AND date = ?`,
+      let record = await db.getFirstAsync<any>(
+        `SELECT * FROM work_records WHERE user_id = ? AND date = ? AND check_in_timestamp IS NOT NULL AND check_out_timestamp IS NULL ORDER BY check_in_timestamp DESC`,
         [userId, todayStr]
       );
+
+      if (!record) {
+        record = await db.getFirstAsync<any>(
+          `SELECT * FROM work_records WHERE user_id = ? AND date = ? ORDER BY check_in_timestamp DESC`,
+          [userId, todayStr]
+        );
+      }
 
       if (record && record.check_in_timestamp && !record.check_out_timestamp) {
         setCurrentPunchType('out');
@@ -151,102 +330,140 @@ export default function HomeScreen() {
         [userId]
       );
       setWeeklyRecords(result);
+
+      // Streak calculation
+      const allRecords = await db.getAllAsync<WorkRecord>(
+        `SELECT * FROM work_records WHERE user_id = ? ORDER BY date DESC`,
+        [userId]
+      );
+      let count = 0;
+      for (const r of allRecords) {
+        if (!r.is_leave_day && (r.check_in_timestamp || r.check_out_timestamp)) {
+          count++;
+        } else if (r.is_leave_day) {
+           // Skip leave days without breaking the streak
+        } else {
+           break;
+        }
+      }
+      setStreakCount(count);
     } catch (e) {
       console.log('Error loading weekly records', e);
     }
   };
 
   const handlePunch = async () => {
+    if (isPunching) return;
+    try {
+      setIsPunching(true);
+      if (workLocation) {
+        let isWifiValid = false;
+        try {
+          isWifiValid = await verifyWorkWifi();
+        } catch (e) {}
+
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        let loc = null;
+        let distance = 99999;
+        let locationError = '';
+
+        if (status === 'granted') {
+          const hasServices = await Location.hasServicesEnabledAsync();
+          if (hasServices) {
+            try {
+              loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+            } catch (err) {
+              try {
+                loc = await Location.getLastKnownPositionAsync({});
+              } catch (err2) { }
+            }
+
+            if (loc) {
+              setUserLocation({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+              distance = getDistance(loc.coords.latitude, loc.coords.longitude, workLocation.lat, workLocation.lng);
+            } else {
+              locationError = 'Konum alınamıyor.';
+            }
+          } else {
+            locationError = 'Konum servisleri kapalı.';
+          }
+        } else {
+          locationError = 'Konum izni reddedildi.';
+        }
+
+        // Karar Verme Mantığı: Öncelik Konum, Konum başarısızsa veya uzaksa Wi-Fi
+        if (loc && distance <= 300) {
+          console.log('Konum doğrulandı.');
+        } else if (isWifiValid) {
+          console.log('Konum bulunamadı veya uzak ancak Wi-Fi doğrulandı.');
+        } else {
+          // İkisi de başarısız
+          if (currentPunchType === 'in') {
+            const errorMsg = loc 
+              ? `İş yerinizden çok uzaksınız! (Mesafe: ${Math.round(distance)}m)\nWi-Fi ağı da eşleşmedi.\nGiriş yapamazsınız.`
+              : `${locationError}\nWi-Fi ağı da eşleşmedi. Giriş yapılamıyor.`;
+            Alert.alert('Hata', errorMsg);
+            setIsPunching(false);
+            return;
+          } else {
+            setIsPunching(false);
+            Alert.alert(
+              'Uzaktan Çıkış', 
+              `İş yerinizden uzaktasınız / konum alınamadı. Wi-Fi da eşleşmedi. Yine de çıkış yapmak istiyor musunuz?`,
+              [
+                { text: 'İptal', style: 'cancel' },
+                { text: 'Evet, Çıkış Yap', onPress: async () => {
+                    setIsPunching(true);
+                    const result = await recordPunch(currentPunchType, 'manual');
+                    if (!result.success) Alert.alert('Hata', result.message);
+                    else {
+                      await stopGeofencing();
+                      checkCurrentState();
+                      loadWeeklyRecords();
+                    }
+                    setIsPunching(false);
+                  }
+                }
+              ]
+            );
+            return;
+          }
+        }
+      }
+
+      const result = await recordPunch(currentPunchType, 'manual');
+      if (!result.success) {
+        Alert.alert('Hata', result.message || 'Bilinmeyen bir hata oluştu.');
+      } else {
+        if (currentPunchType === 'in') await startGeofencing();
+        else await stopGeofencing();
+        
+        checkCurrentState();
+        loadWeeklyRecords();
+        syncToCloud().catch(e => console.log(e));
+      }
+    } catch (e: any) {
+      console.error('Punch Error:', e);
+      Alert.alert('Hata', `İşlem başarısız: ${e.message || 'Konum alınamadı'}`);
+    } finally {
+      setIsPunching(false);
+    }
+  };
+
+  const handleLeaveDay = async () => {
     Alert.alert(
-      'Onay',
-      currentPunchType === 'in' ? 'İşe giriş yapmak istediğinize emin misiniz?' : 'İşten çıkış yapmak istediğinize emin misiniz?',
+      'İzinli / Mazeretli',
+      'Bugün için izinli / mazeretli sayılmak istediğinize emin misiniz? Giriş uyarıları kapatılacaktır.',
       [
         { text: 'İptal', style: 'cancel' },
-        { 
-          text: 'Evet', 
-          onPress: async () => {
-            try {
-              if (workLocation) {
-                const { status } = await Location.requestForegroundPermissionsAsync();
-                if (status !== 'granted') {
-                  Alert.alert('Hata', 'Konum izni gerekli!');
-                  return;
-                }
-
-                const hasServices = await Location.hasServicesEnabledAsync();
-                if (!hasServices) {
-                  Alert.alert('Hata', 'Konum servisleri kapalı. Lütfen cihazınızın konum (GPS) özelliğini açın.');
-                  return;
-                }
-
-                let loc = null;
-                try {
-                  loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-                } catch (err) {
-                  try {
-                    loc = await Location.getLastKnownPositionAsync({});
-                  } catch (err2) {
-                    console.log('Error getting last known position:', err2);
-                  }
-                }
-
-                if (!loc) {
-                  Alert.alert('Hata', 'Konum alınamıyor. Lütfen GPS bağlantınızı kontrol edin.');
-                  return;
-                }
-                
-                // Update user location on successful fetch
-                setUserLocation({ lat: loc.coords.latitude, lng: loc.coords.longitude });
-                
-                const distance = getDistance(loc.coords.latitude, loc.coords.longitude, workLocation.lat, workLocation.lng);
-                
-                if (distance > 300) {
-                  if (currentPunchType === 'in') {
-                    Alert.alert('Hata', `İş yerinizden çok uzaksınız! (Mesafe: ${Math.round(distance)}m)\nGiriş yapamazsınız.`);
-                    return;
-                  } else {
-                    // Ask if they really want to check out since they are far
-                    Alert.alert(
-                      'Uzaktan Çıkış', 
-                      `İş yerinizden uzaktasınız (${Math.round(distance)}m). Yine de çıkış yapmak istiyor musunuz?`,
-                      [
-                        { text: 'İptal', style: 'cancel' },
-                        { text: 'Evet, Çıkış Yap', onPress: async () => {
-                            const result = await recordPunch(currentPunchType, 'manual');
-                            if (!result.success) {
-                              Alert.alert('Hata', result.message);
-                            } else {
-                              await stopGeofencing();
-                              checkCurrentState();
-                              loadWeeklyRecords();
-                            }
-                          }
-                        }
-                      ]
-                    );
-                    return;
-                  }
-                }
-
-                const result = await recordPunch(currentPunchType, 'manual');
-                if (!result.success) {
-                  Alert.alert('Hata', result.message || 'Bilinmeyen bir hata oluştu.');
-                } else {
-                  if (currentPunchType === 'in') {
-                    await startGeofencing();
-                  } else {
-                    await stopGeofencing();
-                  }
-                  checkCurrentState();
-                  loadWeeklyRecords();
-                  
-                  // Trigger sync in background
-                  syncToCloud().catch(e => console.log(e));
-                }
-              }
-            } catch (e: any) {
-              console.error('Punch Error:', e);
-              Alert.alert('Hata', `İşlem başarısız: ${e.message || 'Konum alınamadı'}`);
+        { text: 'Evet, İzinliyim', onPress: async () => {
+            const result = await markAsLeaveDay();
+            if (result.success) {
+              Alert.alert('Başarılı', 'Bugün izinli olarak işaretlendi.');
+              loadWeeklyRecords();
+              checkCurrentState();
+            } else {
+              Alert.alert('Hata', result.message || 'Bilinmeyen bir hata oluştu');
             }
           }
         }
@@ -277,7 +494,7 @@ export default function HomeScreen() {
     };
 
     return (
-      <View style={[styles.card, { backgroundColor: bgColor, borderColor }]}>
+      <Pressable onPress={() => openEditModal(item)} style={[styles.card, { backgroundColor: bgColor, borderColor }]}>
         <View style={styles.cardHeader}>
           <Text style={styles.dateText}>{item.date} {getDayName(item.date)}</Text>
           {item.is_leave_day && <Text style={styles.leaveBadge}>İZİNLİ</Text>}
@@ -292,43 +509,50 @@ export default function HomeScreen() {
             <Text style={styles.timeValue}>{formatTime(item.check_out_timestamp)}</Text>
           </View>
         </View>
-      </View>
+        {item.note ? (
+          <Text style={{ marginTop: 12, color: Colors.lightText, fontSize: 13, fontStyle: 'italic' }}>
+            Not: {item.note}
+          </Text>
+        ) : null}
+      </Pressable>
     );
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background }}>
-      <WeatherTimeEffect />
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
       
+      <WeatherTimeEffect />
 
       <View style={styles.headerArea}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.buttonContainer,
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={handlePunch}
-        >
-          <LinearGradient
-            colors={currentPunchType === 'in' ? ['#4F46E5', '#3B82F6'] : ['#EF4444', '#F59E0B']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.buttonGradient}
-          >
-            <Feather 
-              name={currentPunchType === 'in' ? 'log-in' : 'log-out'} 
-              size={28} 
-              color="#FFF" 
-              style={{ marginRight: 12 }} 
-            />
-            <Text style={styles.buttonText}>
-              {currentPunchType === 'in' ? 'Giriş Yap' : 'Çıkış Yap'}
-            </Text>
-          </LinearGradient>
-        </Pressable>
+        {streakCount > 0 && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF7ED', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, marginBottom: 16 }}>
+            <Text style={{ fontSize: 16 }}>🔥</Text>
+            <Text style={{ marginLeft: 6, color: '#C2410C', fontWeight: 'bold' }}>{streakCount} Günlük Seri!</Text>
+          </View>
+        )}
+        {elapsedTime && (
+          <View style={styles.elapsedContainer}>
+            <Text style={styles.elapsedLabel}>Bugünkü Çalışma Süreniz</Text>
+            <Text style={styles.elapsedTime}>{elapsedTime}</Text>
+          </View>
+        )}
+
+        <HoldButton 
+          type={currentPunchType} 
+          onPunch={handlePunch} 
+          isLoading={isPunching} 
+        />
+        
         {lastPunchTime && (
           <Text style={styles.lastPunchText}>{lastPunchTime}</Text>
+        )}
+
+        {currentPunchType === 'in' && (
+          <Pressable onPress={handleLeaveDay} style={styles.leaveButton}>
+            <Feather name="coffee" size={16} color={Colors.primary} />
+            <Text style={styles.leaveButtonText}>Bugün İzinliyim / Hastayım</Text>
+          </Pressable>
         )}
       </View>
 
@@ -377,7 +601,16 @@ export default function HomeScreen() {
       )}
       
       <View style={styles.listArea}>
-        <Text style={styles.listTitle}>Son 7 Gün</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, marginBottom: 12 }}>
+          <Text style={[styles.listTitle, { paddingHorizontal: 0, marginBottom: 0 }]}>Son 7 Gün</Text>
+          <Pressable onPress={() => {
+            const now = new Date();
+            setNewRecordDate(`${now.getDate().toString().padStart(2, '0')}.${(now.getMonth() + 1).toString().padStart(2, '0')}.${now.getFullYear()}`);
+            setIsNewRecordModalVisible(true);
+          }} style={{ backgroundColor: Colors.card, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: Colors.border }}>
+            <Text style={{ color: Colors.primary, fontWeight: 'bold' }}>+ Ekle</Text>
+          </Pressable>
+        </View>
         <FlatList
           data={weeklyRecords}
           keyExtractor={item => item.id}
@@ -429,6 +662,115 @@ export default function HomeScreen() {
           </SafeAreaView>
         </Modal>
       )}
+
+      {editingRecord && (
+        <Modal visible={true} transparent={true} animationType="fade">
+          <View style={styles.editModalContainer}>
+            <View style={styles.editModalContent}>
+              <Text style={styles.editModalTitle}>Kaydı Düzenle: {editingRecord.date}</Text>
+              
+              <Text style={styles.editLabel}>Giriş Saati (SS:DD)</Text>
+              <TextInput
+                style={styles.editInput}
+                value={editInTime}
+                onChangeText={setEditInTime}
+                placeholder="Örn: 08:30"
+                placeholderTextColor="#94A3B8"
+                keyboardType="numbers-and-punctuation"
+              />
+              
+              <Text style={styles.editLabel}>Çıkış Saati (SS:DD)</Text>
+              <TextInput
+                style={styles.editInput}
+                value={editOutTime}
+                onChangeText={setEditOutTime}
+                placeholder="Örn: 18:00"
+                placeholderTextColor="#94A3B8"
+                keyboardType="numbers-and-punctuation"
+              />
+
+              <Text style={styles.editLabel}>Not</Text>
+              <TextInput
+                style={styles.editInput}
+                value={editNote}
+                onChangeText={setEditNote}
+                placeholder="Örn: Trafik nedeniyle geciktim"
+                placeholderTextColor="#94A3B8"
+              />
+
+              <View style={styles.editButtons}>
+                <Pressable style={styles.editCancelBtn} onPress={() => setEditingRecord(null)}>
+                  <Text style={styles.editCancelText}>İptal</Text>
+                </Pressable>
+                <Pressable style={styles.editSaveBtn} onPress={saveEditRecord}>
+                  <Text style={styles.editSaveText}>Kaydet</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {isNewRecordModalVisible && (
+        <Modal visible={true} transparent={true} animationType="fade">
+          <View style={styles.editModalContainer}>
+            <View style={styles.editModalContent}>
+              <Text style={styles.editModalTitle}>Yeni Manuel Kayıt</Text>
+              
+              <Text style={styles.editLabel}>Tarih (GG.AA.YYYY)</Text>
+              <TextInput
+                style={styles.editInput}
+                value={newRecordDate}
+                onChangeText={setNewRecordDate}
+                placeholder="Örn: 25.10.2023"
+                placeholderTextColor="#94A3B8"
+              />
+
+              <Text style={styles.editLabel}>Giriş Saati (SS:DD)</Text>
+              <TextInput
+                style={styles.editInput}
+                value={newRecordInTime}
+                onChangeText={setNewRecordInTime}
+                placeholder="Örn: 08:30"
+                placeholderTextColor="#94A3B8"
+                keyboardType="numbers-and-punctuation"
+              />
+              
+              <Text style={styles.editLabel}>Çıkış Saati (SS:DD)</Text>
+              <TextInput
+                style={styles.editInput}
+                value={newRecordOutTime}
+                onChangeText={setNewRecordOutTime}
+                placeholder="Örn: 18:00"
+                placeholderTextColor="#94A3B8"
+                keyboardType="numbers-and-punctuation"
+              />
+
+              <Text style={styles.editLabel}>Not</Text>
+              <TextInput
+                style={styles.editInput}
+                value={newRecordNote}
+                onChangeText={setNewRecordNote}
+                placeholder="Örn: Mesai"
+                placeholderTextColor="#94A3B8"
+              />
+
+              <View style={styles.editButtons}>
+                <Pressable style={styles.editCancelBtn} onPress={() => setIsNewRecordModalVisible(false)}>
+                  <Text style={styles.editCancelText}>İptal</Text>
+                </Pressable>
+                <Pressable style={styles.editSaveBtn} onPress={saveNewRecord}>
+                  <Text style={styles.editSaveText}>Kaydet</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      <Text style={{ textAlign: 'center', color: '#9CA3AF', fontSize: 12, marginTop: 40, marginBottom: 20 }}>
+        v1.8.0
+      </Text>
     </ScrollView>
     </View>
   );
@@ -477,6 +819,60 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     fontFamily: 'System', 
+  },
+  elapsedContainer: {
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 16,
+    marginBottom: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  elapsedLabel: {
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  elapsedTime: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: Colors.primary,
+    marginTop: 4,
+  },
+  holdContainer: {
+    width: '100%',
+    height: 60,
+    borderRadius: 30,
+    overflow: 'hidden',
+    marginBottom: 16,
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFF',
+  },
+  holdBackground: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: '#FFF',
+  },
+  holdFill: {
+    ...StyleSheet.absoluteFill,
+  },
+  holdContent: {
+    ...StyleSheet.absoluteFill,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  holdText: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginLeft: 12,
   },
   lastPunchText: {
     marginTop: 16,
@@ -615,6 +1011,90 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+  },
+  leaveButton: {
+    marginTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  leaveButtonText: {
+    marginLeft: 8,
+    color: Colors.primary,
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  editModalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editModalContent: {
+    backgroundColor: Colors.card,
+    borderRadius: 20,
+    padding: 24,
+    width: '85%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  editModalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.text,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  editLabel: {
+    fontSize: 14,
+    color: Colors.lightText,
+    marginBottom: 8,
+  },
+  editInput: {
+    backgroundColor: Colors.background,
+    color: Colors.text,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  editButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 8,
+  },
+  editCancelBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    marginRight: 12,
+    backgroundColor: Colors.background,
+  },
+  editCancelText: {
+    color: Colors.lightText,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  editSaveBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    backgroundColor: Colors.primary,
+  },
+  editSaveText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
   }
 });
 

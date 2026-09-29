@@ -4,6 +4,7 @@ import { Colors } from '../../constants/Colors';
 import { getDb } from '../../database/db';
 import { WorkRecord } from '../../database/recordPunch';
 import { useFocusEffect } from 'expo-router';
+import { getPublicHolidayName } from '../../utils/holidays';
 
 export default function HistoryScreen() {
   const [records, setRecords] = useState<WorkRecord[]>([]);
@@ -43,14 +44,28 @@ export default function HistoryScreen() {
   };
 
   const handleLongPress = (record: WorkRecord) => {
-    Alert.alert(
-      'Durum Değiştir',
-      record.is_leave_day ? 'İzinli durumunu kaldır?' : 'Bu günü İzinli/Resmi Tatil olarak işaretle?',
-      [
-        { text: 'İptal', style: 'cancel' },
-        { text: 'Evet', onPress: () => toggleLeaveDay(record) }
-      ]
-    );
+    const holidayName = getPublicHolidayName(record.date);
+    const titleMessage = holidayName ? `Bu tarih: ${holidayName}` : 'Durum Değiştir';
+    
+    if (record.is_leave_day) {
+      Alert.alert(
+        titleMessage,
+        'Bu gün şu anda İzinli/Tatil olarak işaretli. İptal edip normal çalışma gününe çevirmek ister misiniz?',
+        [
+          { text: 'Hayır', style: 'cancel' },
+          { text: 'Evet, Normal Gün Yap', onPress: () => toggleLeaveDay(record) }
+        ]
+      );
+    } else {
+      Alert.alert(
+        titleMessage,
+        'Bu günü İzinli (veya Özel Tatil) olarak işaretlemek istiyor musunuz? İşaretlediğinizde beklenen çalışma süresine dahil edilmeyecektir.',
+        [
+          { text: 'Vazgeç', style: 'cancel' },
+          { text: 'İzinli / Tatil Olarak İşaretle', onPress: () => toggleLeaveDay(record) }
+        ]
+      );
+    }
   };
 
   const formatTime = (ts: number | null) => {
@@ -70,8 +85,15 @@ export default function HistoryScreen() {
         style={[styles.card, { backgroundColor: bgColor, borderColor }]}
       >
         <View style={styles.cardHeader}>
-          <Text style={styles.dateText}>{item.date}</Text>
-          {item.is_leave_day && <Text style={styles.leaveBadge}>İZİNLİ</Text>}
+          <View style={{ flex: 1 }}>
+            <Text style={styles.dateText}>{item.date}</Text>
+            {getPublicHolidayName(item.date) && (
+              <Text style={{ fontSize: 12, color: Colors.primary, marginTop: 4, fontWeight: 'bold' }}>
+                {getPublicHolidayName(item.date)}
+              </Text>
+            )}
+          </View>
+          {item.is_leave_day && <Text style={styles.leaveBadge}>İZİNLİ / TATİL</Text>}
         </View>
         
         <View style={styles.timeContainer}>
