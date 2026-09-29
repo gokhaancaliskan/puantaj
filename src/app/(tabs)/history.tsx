@@ -87,13 +87,13 @@ export default function HistoryScreen() {
         <View style={styles.cardHeader}>
           <View style={{ flex: 1 }}>
             <Text style={styles.dateText}>{item.date}</Text>
-            {getPublicHolidayName(item.date) && (
+            {getPublicHolidayName(item.date) ? (
               <Text style={{ fontSize: 12, color: Colors.primary, marginTop: 4, fontWeight: 'bold' }}>
                 {getPublicHolidayName(item.date)}
               </Text>
-            )}
+            ) : null}
           </View>
-          {item.is_leave_day && <Text style={styles.leaveBadge}>İZİNLİ / TATİL</Text>}
+          {item.is_leave_day ? <Text style={styles.leaveBadge}>İZİNLİ / TATİL</Text> : null}
         </View>
         
         <View style={styles.timeContainer}>
@@ -107,9 +107,9 @@ export default function HistoryScreen() {
           </View>
         </View>
 
-        {isMissing && !item.is_leave_day && (
+        {(isMissing && !item.is_leave_day) ? (
           <Text style={styles.errorText}>Eksik kayıt! Uzun basarak düzenleyin veya izinli işaretleyin.</Text>
-        )}
+        ) : null}
       </Pressable>
     );
   };

@@ -82,3 +82,6 @@ v1.9.2
 - `holidays.ts` içindeki `getPublicHolidayName` fonksiyonu tanımlanmadığı halde History ve Report'ta kullanılıyordu, fonksiyon oluşturulup hatası giderildi.
 - `deviceAuth.ts` içerisinde hatalı kullanılan `Application.androidId` kullanımı, resmi olarak `Application.getAndroidId()` kullanılarak düzeltildi.
 - Tüm bu değişiklikler sonucu genel tip hataları (Typecheck) sıfıra indirildi.
+
+v1.9.3
+- Geçmiş (History) sekmesinde, SQLite veritabanındaki izin durumu tamsayı (0) olarak döndüğünde meydana gelen gizli bir React Native ("Text strings must be rendered within a <Text> component") çökme hatası giderildi.
