@@ -13,6 +13,7 @@ export default function SetupLocationScreen() {
   const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [radius, setRadius] = useState<number>(100);
 
   useEffect(() => {
     (async () => {
@@ -27,6 +28,11 @@ export default function SetupLocationScreen() {
           }
         }
         setCurrentLocation({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+      }
+      
+      const storedRadius = await AsyncStorage.getItem('workRadius');
+      if (storedRadius) {
+        setRadius(parseInt(storedRadius, 10));
       }
     })();
   }, []);
@@ -66,7 +72,8 @@ export default function SetupLocationScreen() {
         return;
       }
 
-      await setupGeofencing(currentLocation.lat, currentLocation.lng);
+      await AsyncStorage.setItem('workRadius', radius.toString());
+      await setupGeofencing(currentLocation.lat, currentLocation.lng, radius);
       
       await AsyncStorage.setItem('workLat', currentLocation.lat.toString());
       await AsyncStorage.setItem('workLng', currentLocation.lng.toString());
@@ -151,6 +158,21 @@ export default function SetupLocationScreen() {
         )}
       </View>
 
+      <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 20 }}>
+        {[50, 100, 200].map((r) => (
+          <Pressable 
+            key={r}
+            style={[
+              styles.radiusButton, 
+              radius === r && styles.radiusButtonActive
+            ]}
+            onPress={() => setRadius(r)}
+          >
+            <Text style={[styles.radiusText, radius === r && styles.radiusTextActive]}>{r}m</Text>
+          </Pressable>
+        ))}
+      </View>
+
       <Pressable 
         style={({ pressed }) => [styles.button, pressed && styles.buttonPressed, isLocating && styles.buttonDisabled]} 
         onPress={handleSetWorkLocation}
@@ -167,6 +189,25 @@ export default function SetupLocationScreen() {
 }
 
 const styles = StyleSheet.create({
+  radiusButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 20,
+    marginHorizontal: 5,
+  },
+  radiusButtonActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  radiusText: {
+    color: Colors.text,
+    fontWeight: 'bold',
+  },
+  radiusTextActive: {
+    color: '#fff',
+  },
   container: {
     flex: 1,
     backgroundColor: Colors.background,

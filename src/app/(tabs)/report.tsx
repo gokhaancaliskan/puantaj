@@ -270,6 +270,8 @@ export default function ReportScreen() {
           exportsGroup[dateStr].workedMins += w;
         });
 
+        const XLSX = require('xlsx');
+        const header = ["Kullanıcı", "Tarih", "Giriş", "Çıkış", "Gün Tipi", "İzinli", "Çalışılan", "Fark", "Hak Edilen Fark"];
         const csvRows = Object.values(exportsGroup).map(g => {
           const dateWithDay = `${g.dateStr} ${g.dayName}`.trim();
           const inTime = g.inTimes.join(', ');
@@ -293,29 +295,43 @@ export default function ReportScreen() {
             else earnedDiff = diff * 1.5;
           }
           
-          return `${userEmail};${dateWithDay};${inTime};${outTime};${g.day_type === 'weekday' ? 'Hafta İçi' : g.day_type === 'saturday' ? 'Cumartesi' : 'Pazar'};${g.is_leave_day ? 'Evet' : 'Hayır'};${formatHours(worked)};${formatHours(diff)};${formatHours(earnedDiff)}`;
+          return [
+            userEmail, 
+            dateWithDay, 
+            inTime, 
+            outTime, 
+            g.day_type === 'weekday' ? 'Hafta İçi' : g.day_type === 'saturday' ? 'Cumartesi' : 'Pazar',
+            g.is_leave_day ? 'Evet' : 'Hayır',
+            formatHours(worked),
+            formatHours(diff),
+            formatHours(earnedDiff)
+          ];
         });
-        csvContent += csvRows.join('\n');
-      } else {
-        csvContent += "-;-;-;-;-;-;-;-;-\n";
-      }
+        
+        const ws = XLSX.utils.aoa_to_sheet([header, ...csvRows]);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Rapor");
+        const b64 = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
 
-      const dir = FileSystem.cacheDirectory || FileSystem.documentDirectory || '';
-      const filename = dir + (dir.endsWith('/') ? '' : '/') + 'puantaj_raporu.csv';
-      await FileSystem.writeAsStringAsync(filename, csvContent, { encoding: FileSystem.EncodingType.UTF8 });
-      
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(filename, { 
-          mimeType: 'text/csv', 
-          dialogTitle: 'Puantaj Raporu',
-          UTI: 'public.comma-separated-values-text' // iOS
-        });
+        const dir = FileSystem.cacheDirectory || FileSystem.documentDirectory || '';
+        const filename = dir + (dir.endsWith('/') ? '' : '/') + 'puantaj_raporu.xlsx';
+        await FileSystem.writeAsStringAsync(filename, b64, { encoding: FileSystem.EncodingType.Base64 });
+        
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(filename, { 
+            mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 
+            dialogTitle: 'Puantaj Raporu (Excel)',
+            UTI: 'com.microsoft.excel.xlsx' // iOS
+          });
+        } else {
+          Alert.alert('Bilgi', 'Paylaşım desteklenmiyor, ancak dosya oluşturuldu.');
+        }
       } else {
-        Alert.alert('Bilgi', 'Paylaşım desteklenmiyor, ancak dosya oluşturuldu.');
+        Alert.alert('Bilgi', 'Dışa aktarılacak kayıt bulunamadı.');
       }
     } catch (e: any) {
       console.error('Export failed:', e);
-      Alert.alert('Hata', 'CSV Dışa aktarma başarısız oldu: ' + (e.message || 'Bilinmeyen hata'));
+      Alert.alert('Hata', 'Excel Dışa aktarma başarısız oldu: ' + (e.message || 'Bilinmeyen hata'));
     }
   };
 

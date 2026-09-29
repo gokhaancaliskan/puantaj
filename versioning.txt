@@ -102,3 +102,9 @@ v1.9.5
 v1.9.6
 - Android kurulum (APK) esnasında görünen uygulama sürümünün `1.8.0`'da takılı kalması düzeltildi. Artık Android sürümü (`versionCode` ve `versionName`) otomatik olarak package.json üzerinden dinamik okunarak güncelleniyor.
 - Uygulama içinde (Profil sayfasından) tema değiştirildiğinde stillerin bozulmasını engellemek için geçici olarak kullanıcıya "Uygulamayı yeniden başlatın" uyarısı eklendi. (Stillerin sabit hafızada kalmasından kaynaklı bozulma önlendi).
+
+v1.9.7
+- Geri bildirim gönderme işleminde Supabase (Veritabanı) kaynaklı hataları detaylı olarak ekranda göstermesi sağlandı (örn. RLS güvenlik kuralları engeli).
+- Çıktı alma sistemi baştan yazılarak CSV yerine tamamen uyumlu **Excel (.xlsx)** formatına geçirildi.
+- İş yeri konumu ayarlama ekranına çap (yarıçap - 50m, 100m, 200m) seçme özelliği eklendi. Uygulama artık seçilen çapa göre otomatik giriş-çıkış yapacak.
+- İlk açılışta gösterilen "Uygulama Rehberi (Nasıl Kullanılır?)" ekranına Profil > Ayarlar menüsünden tekrar ulaşılabilmesi için buton eklendi.

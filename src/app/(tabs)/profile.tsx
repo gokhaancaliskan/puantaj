@@ -196,8 +196,8 @@ export default function ProfileScreen() {
       Alert.alert('Başarılı', 'Mesajınız başarıyla iletildi! Teşekkür ederiz.');
       setFeedbackText('');
       setFeedbackModalVisible(false);
-    } catch(err) {
-      Alert.alert('Hata', 'Mesaj gönderilirken bir sorun oluştu. Veritabanınızda (Supabase) "feedbacks" adında bir tablo olduğundan emin olun.');
+    } catch(err: any) {
+      Alert.alert('Hata', 'Mesaj gönderilemedi. Hata: ' + (err.message || JSON.stringify(err)));
       console.log(err);
     } finally {
       setIsSendingFeedback(false);
@@ -441,6 +441,24 @@ export default function ProfileScreen() {
               <Feather name="mail" size={20} color="#fff" />
             </View>
             <Text style={styles.menuItemText}>{t('support')}</Text>
+          </View>
+          <Feather name="chevron-right" size={20} color="#888" />
+        </Pressable>
+        
+        <View style={styles.divider} />
+
+        <Pressable 
+          style={styles.menuItem} 
+          onPress={async () => {
+            await AsyncStorage.setItem('hasSeenOnboarding', 'false');
+            router.replace('/onboarding');
+          }}
+        >
+          <View style={styles.menuRow}>
+            <View style={[styles.iconBox, { backgroundColor: '#34C759' }]}>
+              <Feather name="info" size={20} color="#fff" />
+            </View>
+            <Text style={styles.menuItemText}>Uygulama Rehberi (Nasıl Kullanılır?)</Text>
           </View>
           <Feather name="chevron-right" size={20} color="#888" />
         </Pressable>

@@ -1,6 +1,6 @@
 {
   "name": "puantajim",
-  "version": "1.9.5",
+  "version": "1.9.7",
   "main": "index.js",
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
@@ -27,13 +27,15 @@
     "expo-sqlite": "~57.0.3",
     "expo-status-bar": "~57.0.1",
     "expo-task-manager": "^57.0.20",
+    "expo-updates": "~57.0.24",
     "react": "19.2.3",
     "react-native": "0.86.3",
     "react-native-android-widget": "^0.22.1",
     "react-native-maps": "^1.27.2",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
-    "react-native-url-polyfill": "^4.0.0"
+    "react-native-url-polyfill": "^4.0.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",

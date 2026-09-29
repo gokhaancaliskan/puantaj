@@ -298,12 +298,14 @@ export default function HomeScreen() {
     if (workLocation) {
       const { status: bgStatus } = await Location.requestBackgroundPermissionsAsync();
       if (bgStatus === 'granted') {
+        const radStr = await AsyncStorage.getItem('workRadius');
+        const r = radStr ? parseInt(radStr, 10) : 100;
         await Location.startGeofencingAsync(GEOFENCE_TASK_NAME, [
           {
             identifier: 'work',
             latitude: workLocation.lat,
             longitude: workLocation.lng,
-            radius: 850,
+            radius: r,
             notifyOnEnter: false,
             notifyOnExit: true,
           }
