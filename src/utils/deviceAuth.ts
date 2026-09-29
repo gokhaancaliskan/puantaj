@@ -6,7 +6,7 @@ import { supabase } from '../database/supabase';
 export const getDeviceId = async (): Promise<string | null> => {
   try {
     if (Platform.OS === 'android') {
-      return Application.androidId || 'unknown-android-id';
+      return Application.getAndroidId() || 'unknown-android-id';
     } else if (Platform.OS === 'ios') {
       const iosId = await Application.getIosIdForVendorAsync();
       return iosId || 'unknown-ios-id';

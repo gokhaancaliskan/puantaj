@@ -389,7 +389,7 @@ export default function ProfileScreen() {
             <View style={styles.menuItem}>
               <View style={styles.menuRow}>
                 <View style={[styles.iconBox, { backgroundColor: '#EF4444' }]}>
-                  <Feather name="fingerprint" size={20} color="#fff" />
+                  <Feather name="lock" size={20} color="#fff" />
                 </View>
                 <Text style={styles.menuItemText}>Güvenlik (Parmak İzi/Yüz)</Text>
               </View>

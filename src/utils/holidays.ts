@@ -30,3 +30,30 @@ export const isHoliday = (date: Date): boolean => {
 
   return false;
 };
+
+export const getPublicHolidayName = (dateStr: string): string | null => {
+  if (!dateStr) return null;
+  const parts = dateStr.split('.');
+  if (parts.length !== 3) return null;
+  const dd = parts[0];
+  const mm = parts[1];
+  const yyyy = parts[2];
+  const mmdd = `${dd}-${mm}`;
+  const yyyymmdd = `${yyyy}-${mm}-${dd}`;
+  
+  if (mmdd === '01-01') return 'Yılbaşı';
+  if (mmdd === '23-04') return 'Ulusal Egemenlik ve Çocuk Bayramı';
+  if (mmdd === '01-05') return 'Emek ve Dayanışma Günü';
+  if (mmdd === '19-05') return "Atatürk'ü Anma, Gençlik ve Spor Bayramı";
+  if (mmdd === '15-07') return 'Demokrasi ve Milli Birlik Günü';
+  if (mmdd === '30-08') return 'Zafer Bayramı';
+  if (mmdd === '29-10') return 'Cumhuriyet Bayramı';
+  
+  if (DYNAMIC_HOLIDAYS.includes(yyyymmdd)) {
+    if (yyyymmdd.startsWith('2026-03')) return 'Ramazan Bayramı';
+    if (yyyymmdd.startsWith('2026-05')) return 'Kurban Bayramı';
+    return 'Dini Bayram';
+  }
+  
+  return null;
+};

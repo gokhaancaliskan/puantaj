@@ -75,3 +75,10 @@ v1.9.0
 v1.9.1
 - Yönetici paneline "Gelen İstek ve Öneriler" (Feedbacks) listesi eklendi. Yöneticiler, kullanıcıların attığı mesajları artık doğrudan uygulama içinden görebiliyor.
 - İstek ve Öneri gönderildiğinde, "Yönetici" olarak şifre ile sisteme giriş yapmış cihazlara anında "Yeni İstek ve Öneri Geldi!" şeklinde anlık bildirim (push notification) düşecek şekilde Gerçek Zamanlı (Realtime) altyapısı eklendi.
+
+v1.9.2
+- CSV ve PDF çıktı alırken `expo-file-system/legacy` kütüphanesinden kaynaklanan çökme hatası düzeltildi.
+- Profil sayfasındaki geçersiz 'fingerprint' ikonu Feather 'lock' ikonu ile değiştirildi.
+- `holidays.ts` içindeki `getPublicHolidayName` fonksiyonu tanımlanmadığı halde History ve Report'ta kullanılıyordu, fonksiyon oluşturulup hatası giderildi.
+- `deviceAuth.ts` içerisinde hatalı kullanılan `Application.androidId` kullanımı, resmi olarak `Application.getAndroidId()` kullanılarak düzeltildi.
+- Tüm bu değişiklikler sonucu genel tip hataları (Typecheck) sıfıra indirildi.
