@@ -1,4 +1,4 @@
-import { View, Text, Pressable, StyleSheet, Alert, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Alert, ActivityIndicator, Dimensions, TextInput } from 'react-native';
 import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import * as Location from 'expo-location';
@@ -11,6 +11,8 @@ import MapView, { Marker } from 'react-native-maps';
 export default function SetupLocationScreen() {
   const [isLocating, setIsLocating] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -29,7 +31,25 @@ export default function SetupLocationScreen() {
     })();
   }, []);
 
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    setIsSearching(true);
+    try {
+      const results = await Location.geocodeAsync(searchQuery);
+      if (results.length > 0) {
+        setCurrentLocation({ lat: results[0].latitude, lng: results[0].longitude });
+      } else {
+        Alert.alert('Bulunamadı', 'Girdiğiniz adres veya yer haritada bulunamadı.');
+      }
+    } catch (e) {
+      Alert.alert('Hata', 'Arama sırasında bir hata oluştu.');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   const handleSetWorkLocation = async () => {
+    if (!currentLocation) return;
     try {
       setIsLocating(true);
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -46,22 +66,14 @@ export default function SetupLocationScreen() {
         return;
       }
 
-      let location = await Location.getLastKnownPositionAsync({});
-      if (!location) {
-        try {
-          location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low });
-        } catch (e) {
-          location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Lowest });
-        }
-      }
-      await setupGeofencing(location.coords.latitude, location.coords.longitude);
+      await setupGeofencing(currentLocation.lat, currentLocation.lng);
       
-      await AsyncStorage.setItem('workLat', location.coords.latitude.toString());
-      await AsyncStorage.setItem('workLng', location.coords.longitude.toString());
+      await AsyncStorage.setItem('workLat', currentLocation.lat.toString());
+      await AsyncStorage.setItem('workLng', currentLocation.lng.toString());
       
       const geocode = await Location.reverseGeocodeAsync({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude
+        latitude: currentLocation.lat,
+        longitude: currentLocation.lng
       });
       
       if (geocode.length > 0) {
@@ -84,8 +96,21 @@ export default function SetupLocationScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>İş Yeri Konumunuz</Text>
       <Text style={styles.subtitle}>
-        Lütfen iş yerinizin konumunu doğrulayın. Haritada bulunduğunuz yer gösterilmektedir.
+        Adres arayabilir veya haritaya dokunarak iş yerinizin konumunu tam olarak işaretleyebilirsiniz.
       </Text>
+      
+      <View style={styles.searchContainer}>
+        <TextInput 
+          style={styles.searchInput}
+          placeholder="İş yeri adı veya adresi ara..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onSubmitEditing={handleSearch}
+        />
+        <Pressable onPress={handleSearch} style={styles.searchButton} disabled={isSearching}>
+          {isSearching ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="search" size={20} color="#fff" />}
+        </Pressable>
+      </View>
       
       <View style={styles.mapContainer}>
         {currentLocation ? (
@@ -104,10 +129,18 @@ export default function SetupLocationScreen() {
               longitudeDelta: 0.005,
             }}
             showsUserLocation={true}
+            onPress={(e) => {
+              setCurrentLocation({ lat: e.nativeEvent.coordinate.latitude, lng: e.nativeEvent.coordinate.longitude });
+            }}
           >
             <Marker
               coordinate={{ latitude: currentLocation.lat, longitude: currentLocation.lng }}
-              title="Şu Anki Konumunuz"
+              title="İş Yeri"
+              description="Kaydırmak için basılı tutun"
+              draggable
+              onDragEnd={(e) => {
+                setCurrentLocation({ lat: e.nativeEvent.coordinate.latitude, lng: e.nativeEvent.coordinate.longitude });
+              }}
             />
           </MapView>
         ) : (
@@ -126,7 +159,7 @@ export default function SetupLocationScreen() {
         {isLocating ? (
           <ActivityIndicator color={Colors.background} />
         ) : (
-          <Text style={styles.buttonText}>Bu Konumu Kaydet</Text>
+          <Text style={styles.buttonText}>İşaretli Konumu Kaydet</Text>
         )}
       </Pressable>
     </View>
@@ -153,8 +186,32 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.text,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 16,
     lineHeight: 20,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  searchInput: {
+    flex: 1,
+    height: 48,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    backgroundColor: '#fff',
+    marginRight: 8,
+  },
+  searchButton: {
+    backgroundColor: Colors.primary,
+    height: 48,
+    width: 48,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   mapContainer: {
     width: '100%',

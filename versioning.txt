@@ -89,3 +89,12 @@ v1.9.2
 
 v1.9.3
 - Geçmiş (History) sekmesinde, SQLite veritabanındaki izin durumu tamsayı (0) olarak döndüğünde meydana gelen gizli bir React Native ("Text strings must be rendered within a <Text> component") çökme hatası giderildi.
+
+v1.9.4
+- CSV/PDF çıktı alırken dosya yazma sorunu (Android `documentDirectory` yetki engeli) giderilerek `cacheDirectory` kullanımı sağlandı.
+- Aynı gün içinde birden fazla giriş-çıkış yapıldığında Seri (Streak) sayacının her bir hareketi ayrı gün olarak kabul edip fazladan artırma hatası düzeltildi. Aynı gün içinde yapılan tüm hareketler tek bir gün sayılacak şekilde gruplandı.
+- `index.tsx` içindeki hardcoded (v1.8.0) sürüm yazısı `Constants.expoConfig?.version` kullanılarak tamamen dinamik hale getirildi.
+
+v1.9.5
+- İş yeri konumu ayarlama (`setup-location.tsx`) ekranına adres/isim ile arama özelliği eklendi (Google Geocode API).
+- Kullanıcıların sadece bulundukları konumu değil, harita üzerinde istedikleri yere dokunarak (veya sürükleyerek) o noktayı "iş yeri" olarak ayarlayabilmesi özelliği (Draggable Marker) eklendi.
