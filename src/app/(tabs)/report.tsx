@@ -300,7 +300,8 @@ export default function ReportScreen() {
         csvContent += "-;-;-;-;-;-;-;-;-\n";
       }
 
-      const filename = (FileSystem as any).documentDirectory + 'puantaj_raporu.csv';
+      const dir = FileSystem.cacheDirectory || FileSystem.documentDirectory || '';
+      const filename = dir + (dir.endsWith('/') ? '' : '/') + 'puantaj_raporu.csv';
       await FileSystem.writeAsStringAsync(filename, csvContent, { encoding: FileSystem.EncodingType.UTF8 });
       
       if (await Sharing.isAvailableAsync()) {
@@ -314,7 +315,7 @@ export default function ReportScreen() {
       }
     } catch (e: any) {
       console.error('Export failed:', e);
-      Alert.alert('Hata', 'Dışa aktarma başarısız oldu: ' + (e.message || 'Bilinmeyen hata'));
+      Alert.alert('Hata', 'CSV Dışa aktarma başarısız oldu: ' + (e.message || 'Bilinmeyen hata'));
     }
   };
 

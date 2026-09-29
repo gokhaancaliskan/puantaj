@@ -333,17 +333,38 @@ export default function HomeScreen() {
 
       // Streak calculation
       const allRecords = await db.getAllAsync<WorkRecord>(
-        `SELECT * FROM work_records WHERE user_id = ? ORDER BY date DESC`,
+        `SELECT * FROM work_records WHERE user_id = ?`,
         [userId]
       );
+      
+      const daysMap = new Map();
+      allRecords.forEach(r => {
+        if (!daysMap.has(r.date)) {
+          daysMap.set(r.date, { hasPunch: false, isLeave: false });
+        }
+        const day = daysMap.get(r.date);
+        if (r.is_leave_day) day.isLeave = true;
+        if (r.check_in_timestamp || r.check_out_timestamp) day.hasPunch = true;
+      });
+
+      const parseDate = (dStr: string) => {
+        if (!dStr) return 0;
+        const parts = dStr.split('.');
+        if (parts.length !== 3) return 0;
+        return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0])).getTime();
+      };
+      
+      const sortedDates = Array.from(daysMap.keys()).sort((a, b) => parseDate(b) - parseDate(a));
+      
       let count = 0;
-      for (const r of allRecords) {
-        if (!r.is_leave_day && (r.check_in_timestamp || r.check_out_timestamp)) {
+      for (const d of sortedDates) {
+        const day = daysMap.get(d);
+        if (day.hasPunch) {
           count++;
-        } else if (r.is_leave_day) {
-           // Skip leave days without breaking the streak
+        } else if (day.isLeave) {
+          // Skip leave days without breaking the streak
         } else {
-           break;
+          break;
         }
       }
       setStreakCount(count);

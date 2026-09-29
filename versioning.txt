@@ -1,3 +1,7 @@
+v1.9.4
+- Aynı gün içinde birden fazla giriş/çıkış yapıldığında serinin 2 gün artması sorunu düzeltildi.
+- CSV ve PDF dışa aktarılırken `documentDirectory`'e ulaşılamamasından kaynaklanan paylaşım ve oluşturma hatası giderildi (dosyalar `cacheDirectory` içerisine taşındı).
+
 v1.0.0
 - İlk çıkış
 - Kaydırma (Swipe) butonu eklendi
